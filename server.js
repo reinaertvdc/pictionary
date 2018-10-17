@@ -43,7 +43,7 @@ wss.on('connection', (ws, req) => {
                     ws.room = roomNo;
                     ws.send('join ' + roomNo);
                     ws.send('init');
-                    rooms[roomNo].sock1.send('init');
+                    // rooms[roomNo].sock1.send('init');
                 }
             }
             else if (message.startsWith('s ')) {

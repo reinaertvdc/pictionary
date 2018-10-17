@@ -28,6 +28,14 @@
     let ws = new WebSocket('wss://' + host + ':' + port);
     window.ws = ws;
 
+    let startIce = false;
+    let continueIce = false;
+    let pc = new RTCPeerConnection({
+        iceServers: [
+            {url: 'stun:stun.1.google.com:19302'}
+        ]
+    });
+
     document.getElementById('create').onclick = event => {
         ws.send('create ' + document.getElementById('passCreate').value);
         document.getElementById('roomJoinCreate').hidden = true;
@@ -53,24 +61,55 @@
             requestLocalStream();
         }
         else if (message === 'init') {
-            //TODO: start ICE procedure
+            if (localStream === undefined) {
+                startIce = true;
+            }
+            else {
+                startIceProcedure();
+            }
         }
         else if (message.startsWith('s ')) {
-            console.log('signal received');
+            if (message.startsWith('s offer\n')) {
+                let sdp = JSON.parse(message.substr(8));
+                pc.setRemoteDescription(sdp);
+                pc.onicecandidate = event => {
+                    if (event.candidate) {
+                        ws.send('s ice\n' + JSON.stringify(event.candidate));
+                    }
+                };
+                pc.onaddstream = event => {
+                    elemVidRemote.src = window.URL.createObjectURL(event.stream);
+                };
+                if (localStream === undefined) {
+                    continueIce = true;
+                }
+                else {
+                    continueIceProcedure();
+                }
+            }
+            else if (message.startsWith('s answer\n')) {
+                let sdp = JSON.parse(message.substr(9));
+                pc.setRemoteDescription(sdp);
+            }
+            else if (message.startsWith('s ice\n')) {
+                let ice = JSON.parse(message.substr(6));
+                pc.addIceCandidate(ice).catch(event => {
+                    console.log(event);
+                });
+            }
         }
-        console.log(message);
     };
 
     function requestLocalStream() {
         navigator.getUserMedia({audio: true, video: true}, s => {
-            stream = s;
+            localStream = s;
             localHasAudio = true;
             localHasVideo = true;
             onLocalStream();
         }, event => {
             console.log('Could not retrieve video input device');
             navigator.getUserMedia({audio: true}, s => {
-                stream = s;
+                localStream = s;
                 localHasAudio = true;
                 localHasVideo = false;
                 onLocalStream();
@@ -81,20 +120,47 @@
         });
 
         function onLocalStream() {
-            if (stream === undefined || (!localHasAudio && !localHasVideo)) return undefined;
+            if (localStream === undefined || (!localHasAudio && !localHasVideo)) return undefined;
             if (localHasVideo) {
-                elemVidLocal.src = window.URL.createObjectURL(stream);
+                elemVidLocal.src = window.URL.createObjectURL(localStream);
+            }
+            if (startIce === true) {
+                startIce = false;
+                startIceProcedure();
+            }
+            else if (continueIce === true) {
+                continueIce = false;
+                continueIceProcedure();
             }
         }
     }
 
+    function startIceProcedure() {
+        console.log('starting ICE procedure');
+        pc.addStream(localStream);
+        pc.createOffer().then(offer => {
+            pc.setLocalDescription(offer);
+            ws.send('s offer\n' + JSON.stringify(offer));
+        });
+        pc.onicecandidate = event => {
+            if (event.candidate) {
+                ws.send('s ice\n' + JSON.stringify(event.candidate));
+            }
+        };
+        pc.onaddstream = event => {
+            elemVidRemote.src = window.URL.createObjectURL(event.stream);
+        }
+    }
+    function continueIceProcedure() {
+        pc.addStream(localStream);
+        pc.createAnswer().then(answer => {
+            pc.setLocalDescription(answer);
+            ws.send('s answer\n' + JSON.stringify(answer));
+        });
+    }
 
-    // let ice = {
-    //     'iceServers': [
-    //         {'url': 'stun:stun.1.google.com:19302'}
-    //     ]
-    // };
-    // let pc = new RTCPeerConnection(ice);
+
+
 
 
 
