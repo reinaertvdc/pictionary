@@ -1,0 +1,109 @@
+<html>
+<head>
+
+</head>
+<body>
+<div id="roomNumber" hidden></div>
+<div id="roomJoinCreate">
+    <input type="text" id="passCreate" placeholder="password"><br>
+    <button id="create">create room</button><br><br>
+    <input type="text" id="room" placeholder="room no.">
+    <input type="text" id="passJoin" placeholder="password"><br>
+    <button id="join">join room</button>
+</div>
+<br><br>
+<video id="local_video" autoplay></video>
+<video id="remote_video" autoplay></video>
+</body>
+<script>
+    let elemVidLocal = document.getElementById('local_video');
+    let elemVidRemote = document.getElementById('remote_video');
+
+    let localStream = undefined;
+    let localHasAudio = false;
+    let localHasVideo = false;
+
+    let host = window.location.hostname;
+    let port = 9004;
+    let ws = new WebSocket('wss://' + host + ':' + port);
+    window.ws = ws;
+
+    document.getElementById('create').onclick = event => {
+        ws.send('create ' + document.getElementById('passCreate').value);
+        document.getElementById('roomJoinCreate').hidden = true;
+    };
+
+    document.getElementById('join').onclick = event => {
+        ws.send('join ' + document.getElementById('room').value + ' ' + document.getElementById('passJoin').value);
+        document.getElementById('roomJoinCreate').hidden = true;
+    };
+
+    ws.onmessage = event => {
+        let message = event.data;
+        if (message === 'fail') {
+            document.getElementById('passCreate').value = '';
+            document.getElementById('room').value = '';
+            document.getElementById('passJoin').value = '';
+            document.getElementById('roomJoinCreate').hidden = false;
+        }
+        else if (message.startsWith('join ')) {
+            let roomNumber = parseInt(message.substr(5));
+            document.getElementById('roomNumber').innerHTML = 'Room Number: ' + roomNumber;
+            document.getElementById('roomNumber').hidden = false;
+            requestLocalStream();
+        }
+        else if (message === 'init') {
+            //TODO: start ICE procedure
+        }
+        else if (message.startsWith('s ')) {
+            console.log('signal received');
+        }
+        console.log(message);
+    };
+
+    function requestLocalStream() {
+        navigator.getUserMedia({audio: true, video: true}, s => {
+            stream = s;
+            localHasAudio = true;
+            localHasVideo = true;
+            onLocalStream();
+        }, event => {
+            console.log('Could not retrieve video input device');
+            navigator.getUserMedia({audio: true}, s => {
+                stream = s;
+                localHasAudio = true;
+                localHasVideo = false;
+                onLocalStream();
+            }, event => {
+                console.log('Could not retrieve audio input device');
+                onLocalStream();
+            });
+        });
+
+        function onLocalStream() {
+            if (stream === undefined || (!localHasAudio && !localHasVideo)) return undefined;
+            if (localHasVideo) {
+                elemVidLocal.src = window.URL.createObjectURL(stream);
+            }
+        }
+    }
+
+
+    // let ice = {
+    //     'iceServers': [
+    //         {'url': 'stun:stun.1.google.com:19302'}
+    //     ]
+    // };
+    // let pc = new RTCPeerConnection(ice);
+
+
+
+
+    //
+    // pc.onicecandidate = event => {
+    //     if (event.candidate) {
+    //         ws.send(event.candidate);
+    //     }
+    // };
+</script>
+</html>
