@@ -47,8 +47,6 @@ wss.on('connection', (ws, req) => {
                 }
             }
             else if (message.startsWith('s ')) {
-                console.log(rooms[ws.room]);
-                console.log(ws.room);
                 if (ws.room !== undefined && rooms[ws.room] !== undefined && rooms[ws.room].sock1 !== undefined && rooms[ws.room].sock2 !== undefined) {
                     let sock = rooms[ws.room].sock1;
                     if (sock === ws) sock = rooms[ws.room].sock2;
@@ -65,7 +63,6 @@ wss.on('connection', (ws, req) => {
     ws.on('close', event => {
         if (ws.room !== undefined) {
             rooms[ws.room] = undefined;
-            console.log(rooms);
         }
     });
     console.log('New WebSocket connection from: ' + addr);
