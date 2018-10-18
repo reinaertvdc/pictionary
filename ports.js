@@ -1,4 +1,4 @@
-let ports = {
+const ports = {
     https: 8104,
     wss: 9004
 };
