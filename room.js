@@ -3,8 +3,9 @@ class Room {
 
     constructor() {
         this.index = -1;
-        this.sock1 = undefined;
-        this.sock2 = undefined;
+        this.sockets = [];
+        // this.sock1 = undefined;
+        // this.sock2 = undefined;
         this.pass = '';
         this.public = false;
     }
@@ -35,10 +36,14 @@ class RoomList {
         }
         if (typeof room === 'number') {
             if (room < 0 || room >= this.rooms.length || this.rooms[room] === undefined) return;
-            if (this.rooms[room].sock1 !== undefined && this.rooms[room].sock1.readyState < 2) this.rooms[room].sock1.close();
-            if (this.rooms[room].sock2 !== undefined && this.rooms[room].sock2.readyState < 2) this.rooms[room].sock2.close();
-            this.rooms[room].sock1 = undefined;
-            this.rooms[room].sock2 = undefined;
+            if (this.rooms[room].sockets !== undefined && this.rooms[room].sockets.length > 0) {
+                for (let i = 0; i < this.rooms[room].sockets.length; i++) {
+                    if (this.rooms[room].sockets[i] !== undefined && this.rooms[room].sockets[i].readyState < 2) {
+                        this.rooms[room].sockets[i].close();
+                    }
+                }
+            }
+            this.rooms[room].sockets = [];
             this.rooms[room].index = -1;
             this.rooms[room] = undefined;
             this.roomCount--;
@@ -47,4 +52,4 @@ class RoomList {
 
 }
 
-module.exports = {room: Room, room: RoomList};
+module.exports = {Room: Room, RoomList: RoomList};

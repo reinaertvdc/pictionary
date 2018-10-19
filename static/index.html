@@ -1,34 +1,77 @@
+<!DOCTYPE html>
 <html>
 <head>
-
+    <meta charset="UTF-8">
+    <title>Pictionary Game</title>
+    <script type="text/javascript">
+        window.onload = () => {
+            document.getElementById('btnCreate').onclick = event => {
+                let pass = document.getElementById('passCreate').value;
+                let xhr = new XMLHttpRequest();
+                xhr.open('POST', '/room/create');
+                xhr.setRequestHeader('Content-type', 'application/json');
+                xhr.onreadystatechange = () => {
+                    if (xhr.readyState === 4) {
+                        if (xhr.status === 200) {
+                            let res = JSON.parse(xhr.responseText);
+                            if (res !== undefined && res.roomNo !== undefined && typeof res.roomNo === 'number') {
+                                join(res.roomNo, pass);
+                            }
+                        }
+                    }
+                };
+                xhr.send(JSON.stringify({pass: pass}));
+            };
+            document.getElementById('btnJoin').onclick = event => {
+                let roomNo = document.getElementById('textRoomNo').value;
+                let pass = document.getElementById('passJoin').value;
+                if (roomNo !== undefined && !isNaN(roomNo) && !isNaN(parseInt(roomNo))) {
+                    roomNo = parseInt(roomNo);
+                    join(roomNo, pass);
+                }
+            };
+        };
+        function join(id, pass) {
+            document.title = 'Pictionary Game (room ' + id + ')';
+            window.history.pushState({pageTitle:document.title},'Pictionary Game (room ' + id + ')', '/room/' + id);
+            let xhr = new XMLHttpRequest();
+            xhr.open('GET', '/room/' + id);
+            xhr.onreadystatechange = () => {
+                if (xhr.readyState === 4) {
+                    if (xhr.status === 200) {
+                        let html = xhr.responseText;
+                        let elem = document.createElement('html');
+                        elem.innerHTML = html;
+                        // document.querySelector('html').replaceChild(elem.querySelector('body'), document.body);
+                        document.body.innerHTML = elem.querySelector('body').innerHTML;
+                        elem.querySelectorAll('script').forEach(node => {
+                            eval.call(window, node.innerHTML);
+                        });
+                        test();
+                    }
+                }
+            };
+            xhr.send();
+        }
+    </script>
 </head>
 <body>
 <div id="roomNumber" hidden></div>
 <div id="roomJoinCreate">
-    <form action="/room/create" method="POST">
-        <input type="password" name="pass" id="passCreate" placeholder="password"><br>
-        <input type="submit" value="Create Room">
-        <!--<button id="create">create room</button><br><br>-->
-    </form>
-    <input type="text" id="room" placeholder="room no.">
-    <input type="text" id="passJoin" placeholder="password"><br>
-    <button id="join">join room</button>
+    <input type="password" name="pass" id="passCreate" placeholder="password"><br>
+    <button id="btnCreate">Create Room</button><br><br>
+
+    <input type="text" id="textRoomNo" placeholder="room no.">
+    <input type="password" id="passJoin" placeholder="password"><br>
+    <button id="btnJoin">Join Room</button>
 </div>
-<br><br>
-<video id="local_video" autoplay></video>
-<video id="remote_video" autoplay></video>
+<!--<br><br>-->
+<!--<video id="local_video" autoplay></video>-->
+<!--<video id="remote_video" autoplay></video>-->
 </body>
 <script>
 
-    // document.getElementById('create').onclick = event => {
-    //     ws.send('create ' + document.getElementById('passCreate').value);
-    //     document.getElementById('roomJoinCreate').hidden = true;
-    // };
 
-    // document.getElementById('join').onclick = event => {
-    //     ws.send('join ' + document.getElementById('room').value + ' ' + document.getElementById('passJoin').value);
-    //     document.getElementById('roomJoinCreate').hidden = true;
-    // };
 
     /*let elemVidLocal = document.getElementById('local_video');
     let elemVidRemote = document.getElementById('remote_video');

@@ -3,7 +3,7 @@ const app = require('./app.js');
 const room = require('./room.js');
 const options = require('./cert.js');
 
-const path = require('path');
+// const path = require('path');
 const https = require('https');
 const ws = require('ws');
 
@@ -11,8 +11,10 @@ let httpsServer = https.createServer(options, app);
 let wssServer = https.createServer(options, undefined);
 let wss = new ws.Server({server:httpsServer});
 
+let rooms = new room.RoomList();
+
 app.onCreateRoom = pass => {
-    return 5;
+    return rooms.addRoom(pass).index;
 };
 
 /*wss.on('connection', (ws, req) => {

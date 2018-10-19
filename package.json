@@ -2,7 +2,8 @@
   "name": "nda_pictionary",
   "version": "1.0.0",
   "dependencies": {
-    "ws": "latest",
-    "express": "latest"
+    "body-parser": "^1.18.3",
+    "express": "^4.16.4",
+    "ws": "^6.1.0"
   }
 }
