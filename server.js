@@ -8,8 +8,8 @@ const https = require('https');
 const ws = require('ws');
 
 let httpsServer = https.createServer(options, app);
-let wssServer = https.createServer(options, undefined);
-let wss = new ws.Server({server:httpsServer});
+let wssServer = https.createServer(options);
+let wss = new ws.Server({server: wssServer});
 
 let rooms = new room.RoomList();
 
@@ -73,6 +73,46 @@ wssServer.listen(ports.wss);
 
 wss.on('connection', (ws, req) => {
     let addr = req.connection.remoteAddress;
+    console.log('New WebSocket connection from: ' + addr);
+    ws.on('message', message => {
+        if (typeof message === 'string') {
+            try {
+                let m = JSON.parse(message);
+                console.log('json');
+                console.log(m);
+                if (m.join !== undefined && typeof m.join.room === 'number' && typeof m.join.pass === 'string') {
+                    if (rooms.rooms[m.join.room] !== undefined) {
+                        if (rooms.rooms[m.join.room].pass === m.join.pass) {
+                            ws.send(JSON.stringify({join: {room: m.join.room, success: true}}));
+                        }
+                        else if (m.join.pass === '') {
+                            ws.send(JSON.stringify({join: {room: m.join.room, success: false, needPass: true}}));
+                        }
+                        else {
+                            ws.send(JSON.stringify({join: {room: m.join.room, success: false}}));
+                        }
+                    }
+                    else {
+                        ws.send(JSON.stringify({join: {room: m.join.room, success: false}}));
+                    }
+                }
+                //TODO: json data
+            }
+            catch (err) {
+                let m = message;
+                console.log('string');
+                console.log(m);
+                //TODO: non json data
+            }
+        }
+        else {
+            console.log('binary');
+            //TODO: binary data
+        }
+    });
+    ws.on('close', event => {
+        console.log('WebSocket disconnected from: ' + addr);
+    });
 });
 
 // wss.listen(ports.wss);
