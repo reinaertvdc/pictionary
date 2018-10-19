@@ -5,8 +5,11 @@
 <body>
 <div id="roomNumber" hidden></div>
 <div id="roomJoinCreate">
-    <input type="text" id="passCreate" placeholder="password"><br>
-    <button id="create">create room</button><br><br>
+    <form action="/room/create" method="POST">
+        <input type="password" name="pass" id="passCreate" placeholder="password"><br>
+        <input type="submit" value="Create Room">
+        <!--<button id="create">create room</button><br><br>-->
+    </form>
     <input type="text" id="room" placeholder="room no.">
     <input type="text" id="passJoin" placeholder="password"><br>
     <button id="join">join room</button>
@@ -16,7 +19,18 @@
 <video id="remote_video" autoplay></video>
 </body>
 <script>
-    let elemVidLocal = document.getElementById('local_video');
+
+    // document.getElementById('create').onclick = event => {
+    //     ws.send('create ' + document.getElementById('passCreate').value);
+    //     document.getElementById('roomJoinCreate').hidden = true;
+    // };
+
+    // document.getElementById('join').onclick = event => {
+    //     ws.send('join ' + document.getElementById('room').value + ' ' + document.getElementById('passJoin').value);
+    //     document.getElementById('roomJoinCreate').hidden = true;
+    // };
+
+    /*let elemVidLocal = document.getElementById('local_video');
     let elemVidRemote = document.getElementById('remote_video');
 
     let localStream = undefined;
@@ -157,19 +171,7 @@
             pc.setLocalDescription(answer);
             ws.send('s answer\n' + JSON.stringify(answer));
         });
-    }
+    }*/
 
-
-
-
-
-
-
-    //
-    // pc.onicecandidate = event => {
-    //     if (event.candidate) {
-    //         ws.send(event.candidate);
-    //     }
-    // };
 </script>
 </html>

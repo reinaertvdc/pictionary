@@ -1,23 +1,21 @@
 const ports = require('./ports.js');
 const app = require('./app.js');
-const fs = require('fs');
+const room = require('./room.js');
+const options = require('./cert.js');
+
 const path = require('path');
 const https = require('https');
 const ws = require('ws');
-const Room = require('./room.js');
-
-let options = {
-    key: fs.readFileSync(path.join(__dirname, '/certs/server.key')),
-    cert: fs.readFileSync(path.join(__dirname, 'certs/server.cert'))
-};
 
 let httpsServer = https.createServer(options, app);
-let wssServer = https.createServer(options, app);
+let wssServer = https.createServer(options, undefined);
+let wss = new ws.Server({server:httpsServer});
 
-let rooms = [];
+app.onCreateRoom = pass => {
+    return 5;
+};
 
-let wss = new ws.Server({server:wssServer});
-wss.on('connection', (ws, req) => {
+/*wss.on('connection', (ws, req) => {
     let addr = req.connection.remoteAddress;
     ws.on('message', (message) => {
         if (typeof message === 'string') {
@@ -66,7 +64,13 @@ wss.on('connection', (ws, req) => {
         }
     });
     console.log('New WebSocket connection from: ' + addr);
-});
+});*/
 
 httpsServer.listen(ports.https);
 wssServer.listen(ports.wss);
+
+wss.on('connection', (ws, req) => {
+    let addr = req.connection.remoteAddress;
+});
+
+// wss.listen(ports.wss);
