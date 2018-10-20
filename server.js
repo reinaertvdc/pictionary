@@ -88,7 +88,7 @@ wss.on('connection', (ws, req) => {
                             rooms.rooms[m.join.room].sockets.push(ws);
                             ws.send(JSON.stringify({join: {room: m.join.room, success: true}}));
                             for (let i = 0; i < rooms.rooms[m.join.room].sockets.length - 1; i++) {
-                                if (rooms.rooms[m.join.room].sockets[i] !== undefined && rooms.rooms[m.join.room].sockets[i].readyState === 2) {
+                                if (rooms.rooms[m.join.room].sockets[i] !== undefined && rooms.rooms[m.join.room].sockets[i].readyState === 1) {
                                     rooms.rooms[m.join.room].sockets[i].send(JSON.stringify({peers: rooms.rooms[m.join.room].sockets.length - 1}));
                                 }
                             }
@@ -145,13 +145,13 @@ wss.on('connection', (ws, req) => {
     ws.on('close', event => {
         if (typeof ws.roomNo === 'number' && rooms.rooms[ws.roomNo] !== undefined) {
             if (typeof ws.peerNo === 'number' && rooms.rooms[ws.roomNo].sockets[ws.peerNo] !== undefined) {
-                if (rooms.rooms[ws.roomNo].sockets[ws.peerNo].readyState <= 2)
+                if (rooms.rooms[ws.roomNo].sockets[ws.peerNo].readyState <= 1)
                     rooms.rooms[ws.roomNo].sockets[ws.peerNo].close();
                 rooms.rooms[ws.roomNo].sockets[ws.peerNo] = undefined;
             }
             let remove = true;
             for (let i = 0; i < rooms.rooms[ws.roomNo].sockets.length; i++) {
-                if (rooms.rooms[ws.roomNo].sockets[i] !== undefined && rooms.rooms[ws.roomNo].sockets[i].readyState <= 2) {
+                if (rooms.rooms[ws.roomNo].sockets[i] !== undefined && rooms.rooms[ws.roomNo].sockets[i].readyState <= 1) {
                     remove = false;
                     break;
                 }

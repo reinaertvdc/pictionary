@@ -17,7 +17,6 @@
     let streamLocalReady = false;
 
     if (typeof roomdetails !== 'undefined' && roomdetails !== undefined) {
-        console.log(roomdetails);
         if (roomdetails.room !== undefined && typeof roomdetails.room === 'number') room = roomdetails.room;
         if (roomdetails.pass !== undefined && typeof roomdetails.pass === 'string') pass = roomdetails.pass;
     }
@@ -112,10 +111,11 @@
     }
 
     function onLocalStream(s, video, audio) {
-        console.log('local stream');
-        console.log(s);
+        // console.log('local stream');
+        // console.log(s);
         if (s === undefined || (!audio && !video)) return undefined;
         if (video) {
+            //TODO: set local media stream
             // elemVidLocal.src = window.URL.createObjectURL(localStream);
         }
         streamLocal = s;
@@ -123,12 +123,19 @@
         ws.send(JSON.stringify({peers:0}));
     }
 
+    let peersProcessed = 0;
+    let peers = [];
     function onMessagePeers(p) {
         if (!streamLocalReady || typeof p !== 'number' || p <= 0) return;
-        for (let i = 0; i < p; i++) {
-            ws.send(JSON.stringify({signal:{peer:i,signal:'hello'}}));
+        for (let i = peersProcessed; i < p; i++, peersProcessed++) {
+            peers.push(new RTCPeerConnection({
+                iceServers: [
+                    {url: 'stun:stun.1.google.com:19302'}
+                ]
+            }));
+            //TODO: setup offer
         }
-        console.log(p);
+        console.log(peers);
     }
 
 </script>
