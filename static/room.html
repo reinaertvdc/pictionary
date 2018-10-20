@@ -6,6 +6,8 @@
 </head>
 <body>
     <a href="/">HOME</a>
+    <video id="vid_local" autoplay></video>
+    <div id="vid_remote"></div>
 <script>
 
     let room = -1;
@@ -55,13 +57,19 @@
         if (typeof m === 'string') {
             try {
                 m = JSON.parse(m);
-                console.log('json');
-                console.log(m);
+                // console.log('json');
+                // console.log(m);
                 if (m.join !== undefined) {
                     onMessageJoin(m.join);
                 }
                 if (m.peers !== undefined) {
                     onMessagePeers(m.peers);
+                }
+                if (m.init !== undefined) {
+                    onMessageInit(m.init);
+                }
+                if (m.signal !== undefined && typeof m.signal.peer === 'number' && m.signal.signal !== undefined) {
+                    onMessageSignal(m.signal.peer, m.signal.signal);
                 }
                 //TODO: other json data
             }
@@ -82,7 +90,6 @@
     }
 
     function onMessageJoin(m) {
-        console.log(m);
         if (m.success === false) {
             return;
         }
@@ -133,9 +140,88 @@
                     {url: 'stun:stun.1.google.com:19302'}
                 ]
             }));
-            //TODO: setup offer
         }
-        console.log(peers);
+    }
+
+    function onMessageInit(p) {
+        if (typeof p !== 'number' || p < 0) return;
+        if (p >= peersProcessed) {
+            setTimeout(() => {onMessageInit(p);},100);
+            return;
+        }
+        console.log('init: ' + p);
+        if (streamLocal !== undefined)
+            peers[p].addStream(streamLocal);
+        peers[p].createOffer().then(offer => {
+            peers[p].setLocalDescription(offer);
+            ws.send(JSON.stringify({signal:{peer:p,signal:{offer:offer}}}));
+        });
+        peers[p].onicecandidate = event => {
+            if (event.candidate) {
+                ws.send(JSON.stringify({signal:{peer:p,signal:{ice:event.candidate}}}));
+            }
+        };
+        peers[p].onaddstream = event => {
+            node = createVideoNode(p);
+            node.src = window.URL.createObjectURL(event.stream);
+        }
+    }
+
+    function onMessageSignal(p,s) {
+        if (typeof p !== 'number' || p < 0 || s === undefined) return;
+        if (p >= peersProcessed) {
+            setTimeout(() => {onMessageSignal(p,s);},100);
+            return;
+        }
+        if (typeof s.ice !== 'undefined') {
+            console.log('ice: ' + p);
+            peers[p].addIceCandidate(s.ice).catch(event => {
+                console.log(event);
+            });
+        }
+        if (s.offer !== undefined) {
+            peers[p].setRemoteDescription(s.offer);
+            peers[p].onicecandidate = event => {
+                if (event.candidate) {
+                    ws.send(JSON.stringify({signal:{peer:p,signal:{ice:event.candidate}}}));
+                }
+            };
+            peers[p].onaddstream = event => {
+                node = createVideoNode(p);
+                node.src = window.URL.createObjectURL(event.stream);
+            };
+            peers[p].addStream(streamLocal);
+            peers[p].createAnswer().then(answer => {
+                peers[p].setLocalDescription(answer);
+                ws.send(JSON.stringify({signal:{peer:p,signal:{answer:answer}}}));
+            });
+        }
+        if (s.answer !== undefined) {
+            peers[p].setRemoteDescription(s.answer);
+        }
+    }
+
+    function createVideoNode(p) {
+        let node = document.createElement('video');
+        node.id = 'vid_remote_' + p;
+        node.autoplay = 'true';
+        document.getElementById('vid_remote').appendChild(node);
+
+        let vids = document.querySelectorAll('#vid_remote video');
+        let vidArray = Array.prototype.slice.call(vids, 0);
+        vidArray.sort(function(a,b) {
+            if (a.id < b.id) return -1;
+            if (a.id > b.id) return 1;
+            return 0;
+        });
+        let container = document.getElementById('vid_remote');
+        container.parentElement.removeChild(container);
+        while(container.firstChild) container.removeChild(container.firstChild);
+        for (let i = 0; i < vidArray.length; i++)
+            container.append(vidArray[i]);
+        document.body.append(container);
+
+        return document.getElementById('vid_remote_' + p);
     }
 
 </script>

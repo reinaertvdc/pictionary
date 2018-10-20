@@ -90,6 +90,7 @@ wss.on('connection', (ws, req) => {
                             for (let i = 0; i < rooms.rooms[m.join.room].sockets.length - 1; i++) {
                                 if (rooms.rooms[m.join.room].sockets[i] !== undefined && rooms.rooms[m.join.room].sockets[i].readyState === 1) {
                                     rooms.rooms[m.join.room].sockets[i].send(JSON.stringify({peers: rooms.rooms[m.join.room].sockets.length - 1}));
+                                    rooms.rooms[m.join.room].sockets[i].send(JSON.stringify({init:rooms.rooms[m.join.room].sockets.length - 2}));
                                 }
                             }
                         }
@@ -109,7 +110,7 @@ wss.on('connection', (ws, req) => {
                         console.log('b');
                         ws.send(JSON.stringify({peers:rooms.rooms[ws.roomNo].sockets.length-1}));
                     }
-                    if (m.signal !== undefined && typeof m.signal.peer === 'number' && typeof m.signal.signal === 'string') {
+                    if (m.signal !== undefined && typeof m.signal.peer === 'number' && m.signal.signal !== undefined) {
                         console.log('c');
                         let peer = m.signal.peer;
                         if (peer >= ws.peerNo) peer++;
