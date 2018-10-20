@@ -157,10 +157,10 @@
     };
 
     function requestLocalStream() {
-        navigator.getUserMedia({audio: true, video: true}, s => {
+        neavigator.getUserMedia({audio: true, video: true}, s => {
             localStream = s;
             localHasAudio = true;
-            localHasVideo = true;
+            localHasVido = true;
             onLocalStream();
         }, event => {
             console.log('Could not retrieve video input device');

@@ -13,6 +13,9 @@
 
     let ws = undefined;
 
+    let streamLocal = undefined;
+    let streamLocalReady = false;
+
     if (typeof roomdetails !== 'undefined' && roomdetails !== undefined) {
         console.log(roomdetails);
         if (roomdetails.room !== undefined && typeof roomdetails.room === 'number') room = roomdetails.room;
@@ -27,7 +30,7 @@
             ws = sock;
             joinRoom(room, pass);
         }).catch(() => {
-            //TODO: feedback to user
+            alert('Could not create WebSocket connection to server');
         });
     }
 
@@ -52,13 +55,20 @@
     function onWebSocketMessage(m) {
         if (typeof m === 'string') {
             try {
-                let m = JSON.parse(m);
+                m = JSON.parse(m);
+                console.log('json');
                 console.log(m);
-                //TODO: json data
+                if (m.join !== undefined) {
+                    onMessageJoin(m.join);
+                }
+                if (m.peers !== undefined) {
+                    onMessagePeers(m.peers);
+                }
+                //TODO: other json data
             }
             catch(err) {
                 console.log('string');
-                console.log(m);
+                // console.log(m);
                 //TODO: non json data
             }
         }
@@ -72,7 +82,54 @@
         ws.send(JSON.stringify({join:{room:room,pass:pass}}));
     }
 
-    function onMessageJoin
+    function onMessageJoin(m) {
+        console.log(m);
+        if (m.success === false) {
+            return;
+        }
+        navigator.getUserMedia = navigator.getUserMedia ||
+                                navigator.webkitGetUserMedia ||
+                                navigator.mozGetUserMedia;
+        if (navigator.getUserMedia === undefined) {
+            console.log('getUserMedia not supported by browser');
+            alert('getUserMedia not supported by browser');
+            onLocalStream(undefined, false, false);
+            return;
+        }
+        navigator.getUserMedia({audio: true, video: true}, s => {
+            onLocalStream(s, true, true);
+        }, event => {
+            console.log('Could not retrieve video input device');
+            alert('Could not retrieve video input device');
+            navigator.getUserMedia({audio: true}, s => {
+                onLocalStream(s, false, true);
+            }, event => {
+                console.log('Could not retrieve audio input device');
+                alert('Could not retrieve audio input device');
+                onLocalStream(undefined, false, false);
+            });
+        });
+    }
+
+    function onLocalStream(s, video, audio) {
+        console.log('local stream');
+        console.log(s);
+        if (s === undefined || (!audio && !video)) return undefined;
+        if (video) {
+            // elemVidLocal.src = window.URL.createObjectURL(localStream);
+        }
+        streamLocal = s;
+        streamLocalReady = true;
+        ws.send(JSON.stringify({peers:0}));
+    }
+
+    function onMessagePeers(p) {
+        if (!streamLocalReady || typeof p !== 'number' || p <= 0) return;
+        for (let i = 0; i < p; i++) {
+            ws.send(JSON.stringify({signal:{peer:i,signal:'hello'}}));
+        }
+        console.log(p);
+    }
 
 </script>
 </body>
