@@ -5,8 +5,8 @@
     <title>Pictionary Game</title>
 </head>
 <body>
-    <a href="/">HOME</a>
-    <video id="vid_local" autoplay></video>
+    <a style="font-size:5rem;" href="/">HOME</a><br>
+    <video id="vid_local" autoplay hidden width="600" height="400"></video>
     <div id="vid_remote"></div>
 <script>
 
@@ -123,7 +123,8 @@
         streamLocalReady = true;
         if (video || audio) {
             document.getElementById('vid_local').src = window.URL.createObjectURL(streamLocal);
-            // elemVidLocal.src = window.URL.createObjectURL(localStream);
+            if (video)
+                document.getElementById('vid_local').style.display = 'inline';
         }
         ws.send(JSON.stringify({peers:0}));
     }
@@ -163,17 +164,17 @@
             node = createVideoNode(p);
             node.src = window.URL.createObjectURL(event.stream);
         };
-        // peers[p].onconnectionstatechange = event => {
-            // console.log('state ' + p);
-            // console.log(peers[p].connectionState);
-            // if (peers[p].connectionState !== 'connected') {
-            //     console.log('close ' + p);
-            //     let node = document.getElementById('vid_remote_' + p);
-            //     if (node !== undefined) {
-            //         node.parentElement.removeChild(node);
-            //     }
-            // }
-        // };
+        peers[p].oniceconnectionstatechange = event => {
+            console.log('ice state ' + p);
+            console.log(peers[p].iceConnectionState + ' ' + peers[p].connectionState);
+            if (peers[p].iceConnectionState === 'failed' || peers[p].iceConnectionState === 'disconnected') {
+                let node = document.getElementById('vid_remote_' + p);
+                if (node !== undefined) {
+                    node.parentElement.removeChild(node);
+                }
+                peers[p] = undefined;
+            }
+        };
     }
 
     function onMessageSignal(p,s) {
@@ -205,6 +206,17 @@
                 peers[p].setLocalDescription(answer);
                 ws.send(JSON.stringify({signal:{peer:p,signal:{answer:answer}}}));
             });
+            peers[p].oniceconnectionstatechange = event => {
+                console.log('state ' + p);
+                console.log(peers[p].iceConnectionState + ' ' + peers[p].connectionState);
+                if (peers[p].iceConnectionState === 'failed' || peers[p].iceConnectionState === 'disconnected') {
+                    let node = document.getElementById('vid_remote_' + p);
+                    if (node !== undefined) {
+                        node.parentElement.removeChild(node);
+                    }
+                    peers[p] = undefined;
+                }
+            };
         }
         if (s.answer !== undefined) {
             peers[p].setRemoteDescription(s.answer);
@@ -213,6 +225,8 @@
 
     function createVideoNode(p) {
         let node = document.createElement('video');
+        node.width = 600;
+        node.height = 400;
         node.id = 'vid_remote_' + p;
         node.autoplay = 'true';
         document.getElementById('vid_remote').appendChild(node);
