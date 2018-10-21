@@ -78,8 +78,8 @@ wss.on('connection', (ws, req) => {
         if (typeof message === 'string') {
             try {
                 let m = JSON.parse(message);
-                console.log('json');
-                console.log(m);
+                // console.log('json');
+                // console.log(m);
                 if (m.join !== undefined && typeof m.join.room === 'number' && typeof m.join.pass === 'string') {
                     if (rooms.rooms[m.join.room] !== undefined) {
                         if (rooms.rooms[m.join.room].pass === m.join.pass) {
@@ -107,16 +107,13 @@ wss.on('connection', (ws, req) => {
                 }
                 if (typeof ws.roomNo === 'number' && rooms.rooms[ws.roomNo] !== undefined) {
                     if (typeof m.peers === 'number') {
-                        console.log('b');
                         ws.send(JSON.stringify({peers:rooms.rooms[ws.roomNo].sockets.length-1}));
                     }
                     if (m.signal !== undefined && typeof m.signal.peer === 'number' && m.signal.signal !== undefined) {
-                        console.log('c');
                         let peer = m.signal.peer;
                         if (peer >= ws.peerNo) peer++;
                         let sock = rooms.rooms[ws.roomNo].sockets[peer];
                         let from = ws.peerNo;
-                        console.log('from ' + from + ' to ' + peer);
                         if (from !== peer) {
                             if (from >= peer) from--;
                             if (sock !== undefined) {
@@ -131,7 +128,7 @@ wss.on('connection', (ws, req) => {
                 //TODO: json data
             }
             catch (err) {
-                console.log(err);
+                // console.log(err);
                 let m = message;
                 console.log('string');
                 console.log(m);
@@ -159,7 +156,6 @@ wss.on('connection', (ws, req) => {
             }
             if (remove) {
                 rooms.removeRoom(ws.roomNo);
-                console.log('Removing room ' + ws.roomNo);
             }
         }
         console.log('WebSocket disconnected from: ' + addr);

@@ -118,15 +118,13 @@
     }
 
     function onLocalStream(s, video, audio) {
-        // console.log('local stream');
-        // console.log(s);
         if (s === undefined || (!audio && !video)) return undefined;
-        if (video) {
-            //TODO: set local media stream
-            // elemVidLocal.src = window.URL.createObjectURL(localStream);
-        }
         streamLocal = s;
         streamLocalReady = true;
+        if (video || audio) {
+            document.getElementById('vid_local').src = window.URL.createObjectURL(streamLocal);
+            // elemVidLocal.src = window.URL.createObjectURL(localStream);
+        }
         ws.send(JSON.stringify({peers:0}));
     }
 
@@ -137,7 +135,7 @@
         for (let i = peersProcessed; i < p; i++, peersProcessed++) {
             peers.push(new RTCPeerConnection({
                 iceServers: [
-                    {url: 'stun:stun.1.google.com:19302'}
+                    {url: 'stun:stun.l.google.com:19302'}
                 ]
             }));
         }
@@ -149,10 +147,10 @@
             setTimeout(() => {onMessageInit(p);},100);
             return;
         }
-        console.log('init: ' + p);
-        if (streamLocal !== undefined)
+        if (streamLocal !== undefined) {
             peers[p].addStream(streamLocal);
-        peers[p].createOffer().then(offer => {
+        }
+        peers[p].createOffer({offerToReceiveAudio: true, offerToReceiveVideo:true}).then(offer => {
             peers[p].setLocalDescription(offer);
             ws.send(JSON.stringify({signal:{peer:p,signal:{offer:offer}}}));
         });
@@ -162,11 +160,20 @@
             }
         };
         peers[p].onaddstream = event => {
-            console.log('onaddstream A');
-            console.log(event.stream);
             node = createVideoNode(p);
             node.src = window.URL.createObjectURL(event.stream);
-        }
+        };
+        // peers[p].onconnectionstatechange = event => {
+            // console.log('state ' + p);
+            // console.log(peers[p].connectionState);
+            // if (peers[p].connectionState !== 'connected') {
+            //     console.log('close ' + p);
+            //     let node = document.getElementById('vid_remote_' + p);
+            //     if (node !== undefined) {
+            //         node.parentElement.removeChild(node);
+            //     }
+            // }
+        // };
     }
 
     function onMessageSignal(p,s) {
@@ -176,25 +183,24 @@
             return;
         }
         if (typeof s.ice !== 'undefined') {
-            console.log('ice: ' + p);
             peers[p].addIceCandidate(s.ice).catch(event => {
-                console.log(event);
+                // console.log(event);
             });
         }
         if (s.offer !== undefined) {
             peers[p].setRemoteDescription(s.offer);
+            if (streamLocal !== undefined) {
+                peers[p].addStream(streamLocal);
+            }
             peers[p].onicecandidate = event => {
                 if (event.candidate) {
                     ws.send(JSON.stringify({signal:{peer:p,signal:{ice:event.candidate}}}));
                 }
             };
             peers[p].onaddstream = event => {
-                console.log('onaddstream B');
-                console.log(event.stream);
                 node = createVideoNode(p);
                 node.src = window.URL.createObjectURL(event.stream);
             };
-            peers[p].addStream(streamLocal);
             peers[p].createAnswer().then(answer => {
                 peers[p].setLocalDescription(answer);
                 ws.send(JSON.stringify({signal:{peer:p,signal:{answer:answer}}}));
@@ -224,6 +230,12 @@
         for (let i = 0; i < vidArray.length; i++)
             container.append(vidArray[i]);
         document.body.append(container);
+        document.querySelectorAll('#vid_remote video').forEach(node => {
+            try {
+                node.play();
+            }
+            catch (err) {}
+        });
 
         return document.getElementById('vid_remote_' + p);
     }
