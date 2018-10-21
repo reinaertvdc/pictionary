@@ -162,6 +162,8 @@
             }
         };
         peers[p].onaddstream = event => {
+            console.log('onaddstream A');
+            console.log(event.stream);
             node = createVideoNode(p);
             node.src = window.URL.createObjectURL(event.stream);
         }
@@ -187,6 +189,8 @@
                 }
             };
             peers[p].onaddstream = event => {
+                console.log('onaddstream B');
+                console.log(event.stream);
                 node = createVideoNode(p);
                 node.src = window.URL.createObjectURL(event.stream);
             };
