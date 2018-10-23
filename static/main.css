@@ -24,7 +24,7 @@ body {
 }
 
 .room .whiteboard {
-    background-color: red;
+    /* background-color: red; */
     grid-area: whiteboard;
 }
 
@@ -36,6 +36,10 @@ body {
 .room .chat {
     background-color: yellow;
     grid-area: chat;
+}
+
+.room canvas {
+    display: block;
 }
 
 .room {
