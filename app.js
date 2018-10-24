@@ -28,13 +28,13 @@ app.post('/room/create', (req, res) => {
     createRoom(pass, req, res);
 });
 
-app.get('/room/:id', (req, res) => {
+app.get('/room/:id([0-9]+)', (req, res) => {
     console.log('GET join');
     // let room = parseInt(req.params.id);
     res.sendFile(path.join(__dirname, 'static/room.html'));
 });
 
-app.post('/room/:id', (req, res) => {
+app.post('/room/:id([0-9]+)', (req, res) => {
     console.log('POST join');
     // let pass = req.body.pass;
     // if (pass === undefined) pass = '';
@@ -42,6 +42,7 @@ app.post('/room/:id', (req, res) => {
     res.sendFile(path.join(__dirname, 'static/room.html'));
 });
 
+app.use('/room/', express.static('static/', {index:'index.html'}));
 app.use('/', express.static('static/', {index:'index.html'}));
 
 function createRoom(pass, req, res) {
