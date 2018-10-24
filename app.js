@@ -8,6 +8,14 @@ app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'static/index.html'));
 });
 
+app.get('/CanvasController.js', (req, res) => {
+    res.sendFile(path.join(__dirname, 'static/CanvasController.js'));
+});
+
+app.get('/main.css', (req, res) => {
+    res.sendFile(path.join(__dirname, 'static/main.css'));
+});
+
 app.get('/room/create', (req, res) => {
     createRoom('', req, res);
 });
