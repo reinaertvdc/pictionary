@@ -4,39 +4,45 @@ const bodyParser = require('body-parser');
 let app = express();
 app.use(bodyParser.json());
 
-app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'static/index.html'));
-});
+// app.get('/', (req, res) => {
+//     res.sendFile(path.join(__dirname, 'static/index.html'));
+// });
 
-app.get('/CanvasController.js', (req, res) => {
-    res.sendFile(path.join(__dirname, 'static/CanvasController.js'));
-});
+// app.get('/CanvasController.js', (req, res) => {
+//     res.sendFile(path.join(__dirname, 'static/CanvasController.js'));
+// });
 
-app.get('/main.css', (req, res) => {
-    res.sendFile(path.join(__dirname, 'static/main.css'));
-});
+// app.get('/main.css', (req, res) => {
+//     res.sendFile(path.join(__dirname, 'static/main.css'));
+// });
 
 app.get('/room/create', (req, res) => {
+    console.log('GET create');
     createRoom('', req, res);
 });
 
 app.post('/room/create', (req, res) => {
+    console.log('POST create');
     let pass = req.body.pass;
     if (pass === undefined) pass = '';
     createRoom(pass, req, res);
 });
 
 app.get('/room/:id', (req, res) => {
+    console.log('GET join');
     // let room = parseInt(req.params.id);
     res.sendFile(path.join(__dirname, 'static/room.html'));
 });
 
 app.post('/room/:id', (req, res) => {
+    console.log('POST join');
     // let pass = req.body.pass;
     // if (pass === undefined) pass = '';
     // let room = parseInt(req.params.id);
     res.sendFile(path.join(__dirname, 'static/room.html'));
 });
+
+app.use('/', express.static('static/', {index:'index.html'}));
 
 function createRoom(pass, req, res) {
     let roomNo = app.onCreateRoom(pass);
