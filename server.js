@@ -13,12 +13,17 @@ let app = express();
 const bodyParser = require('body-parser');
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({extended:false}));
+const cookieParser = require('cookie-parser');
+app.use(cookieParser());
 function createRoom(pass, res) {
     let r = rooms.addRoom(pass);
-    if (r !== undefined && typeof r.index === 'number' && r.index >= 0)
-        res.redirect(302, '/room/'+r.index);
-    else
+    if (r !== undefined && typeof r.index === 'number' && r.index >= 0) {
+        res.cookie('pass', pass, {maxAge: 300000, path:'/room/'+r.index});
+        res.redirect(302, '/room/' + r.index);
+    }
+    else {
         res.redirect(302, '/');
+    }
 }
 app.get('/room/create', (req, res) => {
     createRoom('', res);
@@ -29,9 +34,6 @@ app.post('/room/create', (req, res) => {
     createRoom(pass, res);
 });
 app.get('/room/:id([0-9]+)', (req, res) => {
-    res.sendFile(path.join(__dirname, 'room.html'));
-});
-app.post('/room/:id([0-9]+)', (req, res) => {
     res.sendFile(path.join(__dirname, 'room.html'));
 });
 app.use('/room/', express.static('static/'));
@@ -54,7 +56,6 @@ function newWebsocketConnection(ws, req) {
     });
 }
 
-//TODO: rework
 function onWebsocketClose(ws, addr) {
     if (typeof ws.roomNo === 'number' && rooms.rooms[ws.roomNo] !== undefined) {
         if (typeof ws.peerNo === 'number' && rooms.rooms[ws.roomNo].sockets[ws.peerNo] !== undefined) {
@@ -106,19 +107,8 @@ function onMessageJson(ws, msg) {
         if (typeof msg.peers === 'number') {
             onMessagePeers(ws, msg.peers);
         }
-        //TODO: rework to function onMessageSignal
         if (msg.signal !== undefined && typeof msg.signal.peer === 'number' && msg.signal.signal !== undefined) {
             onMessageSignal(ws, msg.signal.peer, msg.signal.signal);
-            let peer = msg.signal.peer;
-            if (peer >= ws.peerNo) peer++;
-            let sock = rooms.rooms[ws.roomNo].sockets[peer];
-            let from = ws.peerNo;
-            if (from !== peer) {
-                if (from >= peer) from--;
-                if (sock !== undefined) {
-                    sock.send(JSON.stringify({signal: {peer: from, signal: msg.signal.signal}}));
-                }
-            }
         }
     }
     else {

@@ -23,6 +23,35 @@
 </script>
 <script type="text/javascript">
 
+    //https://stackoverflow.com/questions/14573223/set-cookie-and-get-cookie-with-javascript
+    function setCookie(name,value,secs,path) {
+        let maxAge = "";
+        if (secs) {
+            maxAge = '; Max-Age=' + (secs*1000);
+            // let date = new Date();
+            // date.setTime(date.getTime() + (secs*1000));
+            // expires = "; expires=" + date.toUTCString();
+        }
+        if (typeof path !== 'string') path = '/';
+        document.cookie = name + '=' + (value || '')  + maxAge + "; path=" + path;
+        console.log(document.cookie);
+    }
+    //https://stackoverflow.com/questions/14573223/set-cookie-and-get-cookie-with-javascript
+    function getCookie(name) {
+        var nameEQ = name + "=";
+        var ca = document.cookie.split(';');
+        for(var i=0;i < ca.length;i++) {
+            var c = ca[i];
+            while (c.charAt(0)==' ') c = c.substring(1,c.length);
+            if (c.indexOf(nameEQ) == 0) return c.substring(nameEQ.length,c.length);
+        }
+        return null;
+    }
+    //https://stackoverflow.com/questions/14573223/set-cookie-and-get-cookie-with-javascript
+    function eraseCookie(name) {
+        document.cookie = name+'=; Max-Age=-1';
+    }
+
     let ws = undefined;
 
     let streamLocal = undefined;
@@ -30,18 +59,18 @@
 
     let room = parseInt(window.location.pathname.split('/',3)[2]);
     let pass = undefined;
+    let passIsCookiePass = false;
+    console.log('cookie pass: ' + getCookie('pass'));
+    if (getCookie('pass') !== undefined && getCookie('pass') !== null) {
+        pass = getCookie('pass');
+        passIsCookiePass = true;
+    }
     if (room === undefined || isNaN(room) || room < 0) {
         window.location = '/';
     }
     else {
         document.title = 'Pictionary Game (room ' + room + ')';
         createWebSocket();
-        // createWebSocket().then(sock => {
-        //     ws = sock;
-        //     joinRoom(room, pass);
-        // }).catch(() => {
-        //     alert('Could not create WebSocket connection to server');
-        // });
     }
 
     function createWebSocket() {
@@ -102,7 +131,9 @@
     }
 
     function onMessageJoin(m) {
-        if (m.needPass === true) {
+        if (m.needPass === true || (m.success === false && passIsCookiePass)) {
+            passIsCookiePass = false;
+            eraseCookie('pass');
             pass = prompt('Enter room password:', '');
             if (pass === null || pass === undefined || pass === '') {
                 window.location = '/';
@@ -114,9 +145,14 @@
             return;
         }
         else if (m.success === false) {
+            eraseCookie('pass');
             window.location = '/';
             alert('Could not enter room ' + room);
             return;
+        }
+        else if (!passIsCookiePass && typeof pass === 'string' && pass.length > 0) {
+            eraseCookie('pass');
+            setCookie('pass', pass, 300, '/room/'+room);
         }
         requestUserMedia();
     }
