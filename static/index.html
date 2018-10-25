@@ -10,64 +10,21 @@
 <body>
 <div id="roomNumber" hidden></div>
 <div id="roomJoinCreate">
-    <input type="password" name="pass" id="passCreate" placeholder="password"><br>
-    <button id="btnCreate">Create Room</button><br><br>
-
+    <form method="POST" action="/room/create">
+        <input type="password" name="pass" placeholder="password"><br>
+        <button type="submit">Create Room</button><br><br>
+    </form>
     <input type="text" id="textRoomNo" placeholder="room no."><br>
-    <input type="password" id="passJoin" placeholder="password"><br>
     <button id="btnJoin">Join Room</button>
 </div>
 </body>
 <script>
-    let roomdetails = undefined;
-    document.getElementById('btnCreate').onclick = event => {
-        let pass = document.getElementById('passCreate').value;
-        let xhr = new XMLHttpRequest();
-        xhr.open('POST', '/room/create');
-        xhr.setRequestHeader('Content-type', 'application/json');
-        xhr.onreadystatechange = () => {
-            if (xhr.readyState === 4) {
-                if (xhr.status === 200) {
-                    let res = JSON.parse(xhr.responseText);
-                    if (res !== undefined && res.roomNo !== undefined && typeof res.roomNo === 'number') {
-                        join(res.roomNo, pass);
-                    }
-                }
-            }
-        };
-        xhr.send(JSON.stringify({pass: pass}));
-    };
     document.getElementById('btnJoin').onclick = event => {
         let roomNo = document.getElementById('textRoomNo').value;
-        let pass = document.getElementById('passJoin').value;
         if (roomNo !== undefined && !isNaN(roomNo) && !isNaN(parseInt(roomNo))) {
             roomNo = parseInt(roomNo);
-            join(roomNo, pass);
+            window.location = '/room/' + roomNo;
         }
     };
-    function join(id, pass) {
-        console.log(pass);
-        document.title = 'Pictionary Game (room ' + id + ')';
-        window.history.pushState({pageTitle:document.title},'Pictionary Game (room ' + id + ')', '/room/' + id);
-        let xhr = new XMLHttpRequest();
-        xhr.open('GET', '/room/' + id);
-        xhr.onreadystatechange = () => {
-            if (xhr.readyState === 4) {
-                if (xhr.status === 200) {
-                    let html = xhr.responseText;
-                    let elem = document.createElement('html');
-                    elem.innerHTML = html;
-                    // document.querySelector('html').replaceChild(elem.querySelector('body'), document.body);
-                    roomdetails = {room:id,pass:pass};
-                    document.body.innerHTML = elem.querySelector('body').innerHTML;
-                    elem.querySelectorAll('script').forEach(node => {
-                        eval.call(window, node.innerHTML);
-                    });
-                }
-            }
-        };
-        xhr.send();
-    }
-
 </script>
 </html>

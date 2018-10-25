@@ -4,8 +4,6 @@ class Room {
     constructor() {
         this.index = -1;
         this.sockets = [];
-        // this.sock1 = undefined;
-        // this.sock2 = undefined;
         this.pass = '';
         this.public = false;
     }
@@ -26,6 +24,19 @@ class RoomList {
         this.rooms[i] = r;
         r.index = i;
         this.roomCount++;
+        setTimeout(() => {
+            let activeConn = false;
+            for (let i = 0; i < r.sockets.length; i++) {
+                if (r.sockets[i] !== undefined && r.sockets[i].readyState <= 1) {
+                    activeConn = true;
+                    break;
+                }
+            }
+            if (!activeConn) {
+                this.removeRoom(r.index);
+            }
+        }, 30000);
+        console.log('Created room (' + r.index + ')');
         return r;
     }
 
@@ -47,6 +58,7 @@ class RoomList {
             this.rooms[room].index = -1;
             this.rooms[room] = undefined;
             this.roomCount--;
+            console.log('Deleted room (' + room + ')');
         }
     }
 
