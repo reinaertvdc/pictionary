@@ -27,7 +27,7 @@ app.use('/room/', session({
     saveUninitialized: true,
     cookie: {
         httpOnly: false,
-        maxAge: 300000,
+        maxAge: 3600000,
         secure: true
     }
 }));
@@ -145,7 +145,7 @@ function onJoin(roomNo, peerNo) {
 
 function onWebsocketClose(ws, addr) {
     store.get(ws.sid, (err, sess) => {
-        if (typeof sess.room === 'number' && rooms.rooms[sess.room] !== undefined) {
+        if (sess !== undefined && sess !== null && typeof sess.room === 'number' && rooms.rooms[sess.room] !== undefined) {
             rooms.rooms[sess.room].removePeerBySid(ws.sid);
             let remove = true;
             for (let i = 0; i < rooms.rooms[sess.room].peers.length; i++) {
