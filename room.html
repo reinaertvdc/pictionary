@@ -8,20 +8,21 @@
 <body>
     <div class="room">
         <div class="appbar"></div>
-        <div class="toolbox"></div>
+        <div class="toolbox">
+            <p></p>
+        </div>
         <div class="whiteboard">
             <canvas id="canvas"></canvas>
         </div>
-        <div class="cameraview">
-            <div id="vid_remote"></div>
-        </div>
+        <div id="cameraview" class="cameraview"></div>
         <div class="chat"></div>
     </div>
 <script type="text/javascript" src="CanvasController.js"></script>
+<script type="text/javascript" src="CameraViewController.js"></script>
+<script type="text/javascript" src="SocketController.js"></script>
+<script type="text/javascript" src="RoomController.js"></script>
 <script type="text/javascript">
-    new CanvasController(document.getElementById("canvas"));
-</script>
-<script type="text/javascript">
+    const roomController = new RoomController();
 
     //https://stackoverflow.com/questions/14573223/set-cookie-and-get-cookie-with-javascript
     function setCookie(name,value,secs,path) {
@@ -77,8 +78,10 @@
         let host = window.location.hostname;
         let port = 9004;
         let sock = new WebSocket('wss://' + host + ':' + port);
+        sock.binaryType = 'arraybuffer';
         sock.onopen = event => {
             ws = sock;
+            roomController.socketController.socket = ws;
             joinRoom(room, pass);
         };
         sock.onerror = event => {
@@ -107,6 +110,10 @@
                 if (m.signal !== undefined && typeof m.signal.peer === 'number' && m.signal.signal !== undefined) {
                     onMessageSignal(m.signal.peer, m.signal.signal);
                 }
+                if (m.master !== undefined) {
+                    console.log(m.master);
+                    roomController.canvasController.isMaster = m.master;
+                }
                 //TODO: other json data
             }
             catch(err) {
@@ -116,8 +123,7 @@
             }
         }
         else {
-            console.log('binary');
-            //TODO: binary data
+            roomController.socketController.receiveBinary(m);
         }
     }
 
@@ -239,6 +245,7 @@
                     node.parentElement.removeChild(node);
                 }
                 peers[p] = undefined;
+                roomController.cameraViewController.update();
             }
         };
     }
@@ -279,6 +286,7 @@
                         node.parentElement.removeChild(node);
                     }
                     peers[p] = undefined;
+                    roomController.cameraViewController.update();
                 }
             };
         }
@@ -293,27 +301,30 @@
         node.height = 400;
         node.id = 'vid_remote_' + p;
         node.autoplay = 'true';
-        document.getElementById('vid_remote').appendChild(node);
+        document.getElementById('cameraview').appendChild(node);
 
-        let vids = document.querySelectorAll('#vid_remote video');
+        let vids = document.querySelectorAll('#cameraview video');
         let vidArray = Array.prototype.slice.call(vids, 0);
         vidArray.sort(function(a,b) {
             if (a.id < b.id) return -1;
             if (a.id > b.id) return 1;
             return 0;
         });
-        let container = document.getElementById('vid_remote');
-        container.parentElement.removeChild(container);
+        let container = document.getElementById('cameraview');
+        const parent = container.parentElement;
+        parent.removeChild(container);
         while(container.firstChild) container.removeChild(container.firstChild);
         for (let i = 0; i < vidArray.length; i++)
             container.append(vidArray[i]);
-        document.body.append(container);
-        document.querySelectorAll('#vid_remote video').forEach(node => {
+        parent.append(container);
+        document.querySelectorAll('#cameraview video').forEach(node => {
             try {
                 node.play();
             }
             catch (err) {}
         });
+
+        roomController.cameraViewController.update();
 
         return document.getElementById('vid_remote_' + p);
     }

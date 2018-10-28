@@ -13,27 +13,30 @@ body {
     display: grid;
 }
 
-.room .appbar {
+.room > * {
+    overflow: hidden;
+}
+
+.room > .appbar {
     background-color: green;
     grid-area: appbar;
 }
 
-.room .toolbox {
+.room > .toolbox {
     background-color: grey;
     grid-area: toolbox;
 }
 
-.room .whiteboard {
-    /* background-color: red; */
+.room > .whiteboard {
     grid-area: whiteboard;
 }
 
-.room .cameraview {
-    background-color: blue;
+.room > .cameraview {
+    background-color: black;
     grid-area: cameraview;
 }
 
-.room .chat {
+.room > .chat {
     background-color: yellow;
     grid-area: chat;
 }
@@ -125,8 +128,8 @@ body {
             auto;
         grid-template-columns:
             calc(100vh - var(--appbar-height))
-            auto
-            auto;
+            calc(calc(100vw - calc(100vh - var(--appbar-height))) / 2)
+            calc(calc(100vw - calc(100vh - var(--appbar-height))) / 2);
         grid-template-areas:
             "appbar appbar appbar"
             "whiteboard toolbox cameraview"

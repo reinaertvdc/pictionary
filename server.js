@@ -8,6 +8,7 @@ const ws = require('ws');
 const express = require('express');
 
 let rooms = new room.RoomList();
+let masterIndex = null;
 
 let app = express();
 const bodyParser = require('body-parser');
@@ -54,6 +55,8 @@ function newWebsocketConnection(ws, req) {
     ws.on('close', event => {
         onWebsocketClose(ws, addr);
     });
+
+    ws.binaryType = 'arraybuffer';
 }
 
 function onWebsocketClose(ws, addr) {
@@ -92,7 +95,6 @@ function onMessage(ws, msg) {
         }
     }
     else {
-        console.log('binary');
         onMessageBinary(ws, msg);
     }
 }
@@ -122,7 +124,17 @@ function onMessageString(ws, msg) {
 }
 
 function onMessageBinary(ws, msg) {
-    //TODO: binary data
+    broadcast(ws, msg);
+}
+
+function broadcast(ws, msg) {
+    const sockets = rooms.rooms[ws.roomNo].sockets;
+
+    for (let i = 0; i < sockets.length; i++) {
+        if (sockets[i] !== undefined && i !== ws.peerNo) {
+            sockets[i].send(msg);
+        }
+    }
 }
 
 function onMessageJoin(ws, roomNo, pass) {
@@ -136,11 +148,27 @@ function onMessageJoin(ws, roomNo, pass) {
             ws.peerNo = room.sockets.length;
             room.sockets.push(ws);
             ws.send(JSON.stringify({join: {room: roomNo, success: true}}));
+            masterIndex = null;
             for (let i = 0; i < room.sockets.length - 1; i++) {
                 if (room.sockets[i] !== undefined && room.sockets[i].readyState === 1) {
                     room.sockets[i].send(JSON.stringify({peers: room.sockets.length - 1}));
                     room.sockets[i].send(JSON.stringify({init: room.sockets.length - 2}));
+
+                    if (masterIndex === null) {
+                        room.sockets[i].send(JSON.stringify({master: true}));
+                        masterIndex = i;
+                    } else {
+                        room.sockets[i].send(JSON.stringify({master: false}));
+                    }
                 }
+            }
+
+            const i = room.sockets.length - 1;
+            if (masterIndex === null) {
+                room.sockets[i].send(JSON.stringify({master: true}));
+                masterIndex = i;
+            } else {
+                room.sockets[i].send(JSON.stringify({master: false}));
             }
         }
         else if (pass === undefined) {
