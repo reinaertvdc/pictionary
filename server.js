@@ -247,7 +247,9 @@ function onMessage(ws, msg) {
                         peer = room.peers[sess.peer];
                     }
                 }
-                onMessageBinary(ws, msg, roomNo, peerNo);
+                if (peer !== undefined && peerNo === room.masterIndex) {
+                    onMessageBinary(ws, msg, roomNo, peerNo);
+                }
             });
         }
         // onMessageBinary(ws, msg);
