@@ -71,7 +71,6 @@ app.post('/room/create', (req, res) => {
 });
 app.post('/room/join', (req, res) => {
     let roomNo = parseInt(req.body.roomNo);
-    console.log(roomNo);
     let nick = req.body.nick;
     if (roomNo === undefined || isNaN(roomNo)) {
         res.redirect(302, '/');
