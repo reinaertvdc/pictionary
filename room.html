@@ -230,7 +230,12 @@
         };
         peers[p].onaddstream = event => {
             node = createVideoNode(p);
-            node.src = window.URL.createObjectURL(event.stream);
+            try {
+                node.src = window.URL.createObjectURL(event.stream);
+            }
+            catch (err) {
+                node.srcObject = event.stream;
+            }
         };
         peers[p].oniceconnectionstatechange = event => {
             if (peers[p].iceConnectionState === 'failed' || peers[p].iceConnectionState === 'disconnected') {
@@ -266,7 +271,12 @@
             };
             peers[p].onaddstream = event => {
                 node = createVideoNode(p);
-                node.src = window.URL.createObjectURL(event.stream);
+                try {
+                    node.src = window.URL.createObjectURL(event.stream);
+                }
+                catch (err) {
+                    node.srcObject = event.stream;
+                }
             };
             peers[p].createAnswer().then(answer => {
                 peers[p].setLocalDescription(answer);
