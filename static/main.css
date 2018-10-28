@@ -25,6 +25,20 @@ body {
 .room > .appbar {
     background-color: green;
     grid-area: appbar;
+    padding-top: 0.2rem;
+    padding-bottom: 0.2rem;
+    padding-left: 0.2rem;
+}
+
+.room > .appbar > a {
+    min-width: 7rem;
+    max-width: 7rem;
+    height: 100%;
+    text-decoration: none;
+    display: inline-block;
+    margin-right: 0.5rem;
+    background-color: cyan;
+    text-align: center;
 }
 
 .room > .toolbox {

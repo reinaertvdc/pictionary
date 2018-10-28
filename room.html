@@ -7,7 +7,10 @@
 </head>
 <body>
     <div class="room">
-        <div class="appbar"></div>
+        <div class="appbar">
+            <a href="/">HOME</a>
+            <a id="mute" href="">MUTE</a>
+        </div>
         <div class="toolbox">
             <p></p>
         </div>
@@ -30,6 +33,17 @@
 <script type="text/javascript" src="SocketController.js"></script>
 <script type="text/javascript" src="RoomController.js"></script>
 <script type="text/javascript">
+    let muted = false;
+    document.getElementById('mute').onclick = ev => {
+        ev.preventDefault();
+        muted = document.getElementById('mute').innerHTML === 'MUTE';
+        if (muted) document.getElementById('mute').innerHTML = 'UNMUTE';
+        else document.getElementById('mute').innerHTML = 'MUTE';
+        document.querySelectorAll('#cameraview > video').forEach(el=>{
+            el.muted = muted;
+        });
+    };
+
     const roomController = new RoomController();
 
     function getSessionID() {
@@ -284,6 +298,7 @@
         node.width = 600;
         node.height = 400;
         node.id = 'vid_remote_' + p;
+        node.muted = muted;
         node.autoplay = 'true';
         document.getElementById('cameraview').appendChild(node);
 
@@ -304,6 +319,7 @@
         document.querySelectorAll('#cameraview video').forEach(node => {
             try {
                 node.play();
+                node.muted = muted;
             }
             catch (err) {
                 // console.log(err);
