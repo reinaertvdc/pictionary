@@ -17,15 +17,17 @@
                 <br><br>
                 <label>You will draw (one word): <input type="text" name="drawing" required></label>
                 <br><br>
+                <label>Your nickname: <input type="text" name="nick" required></label>
+                <br><br>
                 <input type="submit" value="Create Room">
             </fieldset>
         </form>
-        <form onsubmit="onJoinRoom(event)">
+        <form method="POST" action="/room/join">
             <fieldset>
                 <legend>Join an existing room</legend>
-                <label>Room number: <input type="number" min="0" id="textRoomNo" required></label>
+                <label>Room number: <input type="number" min="0" name="roomNo" required></label>
                 <br><br>
-                <label>Your nickname: <input type="text" id="textNickname" required></label>
+                <label>Your nickname: <input type="text" name="nick" required></label>
                 <br><br>
                 <input type="submit" value="Join Room" id="btnJoin">
             </fieldset>
@@ -33,15 +35,15 @@
     </div>
 </body>
 <script>
-    function onJoinRoom(event) {
-        event.preventDefault();
-
-        let roomNo = document.getElementById('textRoomNo').value;
-        if (roomNo !== undefined && !isNaN(roomNo) && !isNaN(parseInt(roomNo))) {
-            roomNo = parseInt(roomNo);
-            window.location = '/room/' + roomNo;
-        }
-    }
+    // function onJoinRoom(event) {
+    //     event.preventDefault();
+    //
+    //     let roomNo = document.getElementById('textRoomNo').value;
+    //     if (roomNo !== undefined && !isNaN(roomNo) && !isNaN(parseInt(roomNo))) {
+    //         roomNo = parseInt(roomNo);
+    //         window.location = '/room/' + roomNo;
+    //     }
+    // }
 </script>
 
 </html>

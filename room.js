@@ -19,7 +19,8 @@ class Room {
         let p = {
             sid: sid,
             socket: sock,
-            joined: false
+            joined: false,
+            nick: ''
         };
         return this.peers.push(p) - 1;
     }

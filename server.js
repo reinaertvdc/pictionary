@@ -34,7 +34,7 @@ app.use('/room/', session({
     }
 }));
 
-function createRoom(word, pass, req, res) {
+function createRoom(word, pass, nick, req, res) {
     let r = rooms.addRoom(pass);
     if (r !== undefined && typeof r.index === 'number' && r.index >= 0) {
         r.word = word;
@@ -42,6 +42,7 @@ function createRoom(word, pass, req, res) {
         req.session.cookie.httpOnly = false;
         req.session.room = r.index;
         req.session.pass = pass;
+        req.session.nick = nick;
         req.session.touch();
         res.redirect(302, '/room/' + r.index);
     }
@@ -56,13 +57,45 @@ function createRoom(word, pass, req, res) {
 app.post('/room/create', (req, res) => {
     let pass = req.body.pass;
     let word = req.body.drawing;
+    let nick = req.body.nick;
     if (pass === undefined) pass = '';
     if (word === undefined || word.trim() === '') {
         res.redirect(302, '/');
+        return;
     }
-    else {
-        createRoom(word, pass, req, res);
+    if (nick === undefined || nick.trim() === '') {
+        res.redirect(302, '/');
+        return;
     }
+    createRoom(word, pass, nick, req, res);
+});
+app.post('/room/join', (req, res) => {
+    let roomNo = parseInt(req.body.roomNo);
+    console.log(roomNo);
+    let nick = req.body.nick;
+    if (roomNo === undefined || isNaN(roomNo)) {
+        res.redirect(302, '/');
+        return;
+    }
+    if (nick === undefined || nick.trim() === '') {
+        res.redirect(302, '/');
+        return;
+    }
+    let room = rooms.rooms[roomNo];
+    if (room === undefined) {
+        res.redirect(302, '/');
+        return;
+    }
+    let peer = room.getPeerBySid(req.sessionID);
+    if (peer !== undefined) {
+        peer.nick = nick;
+    }
+    req.session.cookie.path = '/room/' + roomNo;
+    req.session.cookie.httpOnly = false;
+    req.session.room = roomNo;
+    req.session.nick = nick;
+    req.session.touch();
+    res.redirect(302, '/room/'+roomNo);
 });
 app.get('/room/:id([0-9]+)', (req, res) => {
     req.session.cookie.path = '/room/' + req.params.id;
@@ -98,6 +131,9 @@ function newWebsocketConnection(ws, req) {
             return;
         }
         let peer = rooms.rooms[sess.room].addPeer(sid, ws);
+        if (sess.nick !== undefined) {
+            rooms.rooms[sess.room].peers[peer].nick = sess.nick;
+        }
         sess.peer = peer;
         store.set(sid, sess, err => {
         });
@@ -234,9 +270,6 @@ function onMessageJson(ws, msg) {
                     peerNo = sess.peer;
                     peer = room.peers[sess.peer];
                 }
-                // if (typeof msg.peers === 'number') {
-                //     onMessagePeers(ws, msg.peers);
-                // }
             }
             if (typeof msg.pass === 'string' && peer !== undefined) {
                 if (room.pass === msg.pass) {
@@ -250,6 +283,10 @@ function onMessageJson(ws, msg) {
                 else {
                     ws.send(JSON.stringify({join: false}));
                 }
+            }
+            if (typeof msg.chat === 'string' && peer !== undefined && peer.joined === true) {
+                broadcast(JSON.stringify({nick: peer.nick, chat:msg.chat}), roomNo, peerNo);
+                ws.send(JSON.stringify({nick: peer.nick, chat:msg.chat}));
             }
             if (msg.signal !== undefined && msg.signal.signal !== undefined && (msg.signal.peer === undefined || typeof msg.signal.peer === 'number') && peer !== undefined) {
                 onMessageSignal(roomNo, peerNo, msg.signal.peer, msg.signal.signal);
