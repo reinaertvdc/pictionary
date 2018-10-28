@@ -70,7 +70,12 @@ body {
 
 .room > .chat > .feed {
     border: 1px solid gray;
+    overflow: auto;
     grid-area: feed;
+}
+
+.room > .chat > .feed > * {
+    margin: 8px 0;
 }
 
 .room > .chat > .input {
