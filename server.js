@@ -284,6 +284,7 @@ function onMessageJson(ws, msg) {
             }
             if (typeof msg.chat === 'string' && peer !== undefined && peer.joined === true) {
                 broadcast(JSON.stringify({nick: peer.nick, chat:msg.chat}), roomNo, peerNo);
+                ws.send(JSON.stringify({nick: peer.nick, chat:msg.chat}));
             }
             if (msg.signal !== undefined && msg.signal.signal !== undefined && (msg.signal.peer === undefined || typeof msg.signal.peer === 'number') && peer !== undefined) {
                 onMessageSignal(roomNo, peerNo, msg.signal.peer, msg.signal.signal);
