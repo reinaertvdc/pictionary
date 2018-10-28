@@ -26,24 +26,14 @@ class CanvasController {
 
         // Listen for mouse events to enable drawing.
         const c = this._canvas
-        c.addEventListener('mousedown', (e) => {
-            if (!this.isMaster) { return; }
-            const pos = this._mouseEventToCoords(e);
-            this._beginStroke(pos);
-        });
-        c.addEventListener('mousemove', (e) => {
-            if (!this.isMaster) { return; }
-            const pos = this._mouseEventToCoords(e);
-            this._continueStroke(pos);
-        });
-        c.addEventListener('mouseup', () => {
-            if (!this.isMaster) { return; }
-            this._endStroke();
-        });
-        c.addEventListener('mouseout', () => {
-            if (!this.isMaster) { return; }
-            this._endStroke();
-        });
+        c.addEventListener('mousedown', (e) => { this._onBeginStroke(e); });
+        c.addEventListener('mousemove', (e) => { this._onContinueStroke(e); });
+        c.addEventListener('mouseup', () => { this._onEndStroke(); });
+        c.addEventListener('mouseout', () => { this._onEndStroke(); });
+
+        c.addEventListener('touchstart', (e) => { console.log(e.changedTouches); this._onBeginStroke(e.changedTouches[0]); });
+        c.addEventListener('touchmove', (e) => { this._onContinueStroke(e.changedTouches[0]); });
+        c.addEventListener('touchend', () => { this._onEndStroke(); });
     }
 
     /** @return {string} Whether the user can draw. */
@@ -61,9 +51,6 @@ class CanvasController {
     runCommand(data) {
         data = new Float32Array(data);
         const pos = {x: data[0], y: data[1]};
-
-        console.log(pos.x);
-        console.log(pos.y);
 
         if (pos.x < 0 || pos.y < 0) { this._endStroke(pos); }
         else if (this._isDrawing) { this._continueStroke(pos); }
@@ -106,14 +93,47 @@ class CanvasController {
      * @returns {Array} The coordinates (between 0 and 1) in the form {x, y}.
      */
     _mouseEventToCoords(e) {
-        return {
-            x: e.offsetX / this._size,
-            y: e.offsetY / this._size
+        if (e.offsetX !== undefined) {
+            return {
+                x: e.offsetX / this._size,
+                y: e.offsetY / this._size
+            };
+        } else {
+            const bcr = e.target.getBoundingClientRect();
+
+            return {
+                x: (e.pageX - bcr.left) / this._size,
+                y: (e.pageY - bcr.top) / this._size
+            };
         }
     }
 
     _sendCommand(data) {
         this._roomController.socketController.send(new Float32Array(data));
+    }
+
+    _onBeginStroke(e) {
+        if (!this.isMaster) { return; }
+        const pos = this._mouseEventToCoords(e);
+        this._beginStroke(pos);
+        this._drawStack.push({ key: 'begin', value: pos });
+        if (this.isMaster) { this._sendCommand([pos.x, pos.y]); }
+    }
+
+    _onContinueStroke(e) {
+        if (!this.isMaster) { return; }
+        if (!this._isDrawing) { return; }
+        const pos = this._mouseEventToCoords(e);
+        this._continueStroke(pos);
+        this._drawStack.push({ key: 'continue', value: pos });
+        if (this.isMaster) { this._sendCommand([pos.x, pos.y]); }
+    }
+
+    _onEndStroke() {
+        if (!this.isMaster) { return; }
+        this._endStroke();
+        this._drawStack.push({ key: 'end', value: null });
+        if (this.isMaster) { this._sendCommand([-1, -1]); }
     }
 
     /**
@@ -123,10 +143,7 @@ class CanvasController {
     _beginStroke(pos) {
         this._context.beginPath();
         this._context.moveTo(pos.x * this._size, pos.y * this._size);
-        this._drawStack.push({ key: 'begin', value: pos });
         this._isDrawing = true;
-
-        if (this.isMaster) { this._sendCommand([pos.x, pos.y]); }
     }
 
     /**
@@ -134,12 +151,8 @@ class CanvasController {
      * @param {Array} pos The coordinates (between 0 and 1) in the form {x, y}.
      */
     _continueStroke(pos) {
-        if (!this._isDrawing) { return; }
-        this._drawStack.push({ key: 'continue', value: pos });
         this._context.lineTo(pos.x * this._size, pos.y * this._size);
         this._context.stroke();
-
-        if (this.isMaster) { this._sendCommand([pos.x, pos.y]); }
     }
 
     /**
@@ -147,9 +160,6 @@ class CanvasController {
      */
     _endStroke() {
         this._context.closePath();
-        this._drawStack.push({ key: 'end', value: null });
         this._isDrawing = false;
-
-        if (this.isMaster) { this._sendCommand([-1, -1]); }
     }
 }

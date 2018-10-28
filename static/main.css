@@ -1,7 +1,12 @@
 :root {
-    --appbar-height: 3rem;
+    --appbar-height: 2rem;
     --whiteboard-aspect-ratio: calc(1/1);
     --cameraview-aspect-ratio: calc(3/2);
+}
+
+* {
+    font-size: 105%;
+    font-family: sans-serif;
 }
 
 body {
@@ -36,13 +41,37 @@ body {
     grid-area: cameraview;
 }
 
-.room > .chat {
-    background-color: yellow;
-    grid-area: chat;
-}
-
 .room canvas {
     display: block;
+}
+
+.room > .chat {
+    grid-area: chat;
+    display: grid;
+    grid-template-rows: auto min-content;
+    grid-template-areas:
+        "feed"
+        "input";
+}
+
+.room > .chat > .feed {
+    border: 1px solid gray;
+    grid-area: feed;
+}
+
+.room > .chat > .input {
+    grid-area: input;
+    display: grid;
+    grid-template-columns: auto min-content;
+    grid-template-areas: "text send";
+}
+
+.room > .chat > .input > .text {
+    grid-area: text;
+}
+
+.room > .chat > .input > .send {
+    grid-area: send;
 }
 
 .room {

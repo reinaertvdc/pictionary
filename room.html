@@ -15,10 +15,19 @@
             <canvas id="canvas"></canvas>
         </div>
         <div id="cameraview" class="cameraview"></div>
-        <div class="chat"></div>
+        <div id="chat" class="chat">
+            <div class="feed">
+                
+            </div>
+            <form class="input">
+                <input type="text" id="text" class="text">
+                <input type="submit" value="Send" id="send" class="send">
+            </form>
+        </div>
     </div>
 <script type="text/javascript" src="CanvasController.js"></script>
 <script type="text/javascript" src="CameraViewController.js"></script>
+<script type="text/javascript" src="ChatController.js"></script>
 <script type="text/javascript" src="SocketController.js"></script>
 <script type="text/javascript" src="RoomController.js"></script>
 <script type="text/javascript">
