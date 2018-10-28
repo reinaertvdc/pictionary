@@ -261,6 +261,7 @@ function onMessageBinary(ws, msg, roomNo, peerNo) {
 }
 
 function broadcast(msg, roomNo, peerNo) {
+    if (rooms.rooms[roomNo] === undefined) return;
     const peers = rooms.rooms[roomNo].peers;
     for (let i = 0; i < peers.length; i++) {
         let peer = peers[i];
