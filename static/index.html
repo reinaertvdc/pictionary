@@ -20,7 +20,7 @@
                 <input type="submit" value="Create Room">
             </fieldset>
         </form>
-        <form method="POST" action="/room/create" onsubmit="onJoinRoom">
+        <form onsubmit="onJoinRoom(event)">
             <fieldset>
                 <legend>Join an existing room</legend>
                 <label>Room number: <input type="number" min="0" id="textRoomNo" required></label>
@@ -33,7 +33,9 @@
     </div>
 </body>
 <script>
-    const onJoinRoom = () => {
+    function onJoinRoom(event) {
+        event.preventDefault();
+
         let roomNo = document.getElementById('textRoomNo').value;
         if (roomNo !== undefined && !isNaN(roomNo) && !isNaN(parseInt(roomNo))) {
             roomNo = parseInt(roomNo);
