@@ -15,7 +15,9 @@ let rooms = new room.RoomList();
 let masterIndex = null;
 
 const secret = 'abc';
-let store = new session.MemoryStore();
+let store = new session.MemoryStore({
+    checkPeriod: 3600000
+});
 
 let app = express();
 app.use(bodyParser.json());
