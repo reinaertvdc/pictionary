@@ -5,7 +5,7 @@ class Room {
         this.index = -1;
         this.peers = [];
         this.pass = '';
-        this.masterIndex = null;
+        this.masterIndex = undefined;
         this.public = false;
     }
 

@@ -122,9 +122,9 @@ function onJoin(roomNo, peerNo) {
         if (peer.socket === undefined || peer.socket.readyState !== 1) continue;
         let initPeerNo = peerNo;
         if (i <= peerNo) initPeerNo--;
-        peer.socket.send(JSON.stringify({peers: room.peers.length - 1}));
+        // peer.socket.send(JSON.stringify({peers: room.peers.length - 1}));
         peer.socket.send(JSON.stringify({init: initPeerNo}));
-        if (room.masterIndex === null) {
+        if (room.masterIndex === undefined || room.masterIndex === i) {
             room.peers[i].socket.send(JSON.stringify({master: true}));
             masterIndex = i;
             room.masterIndex = i;
@@ -132,13 +132,14 @@ function onJoin(roomNo, peerNo) {
             room.peers[i].socket.send(JSON.stringify({master: false}));
         }
     }
-//             const i = room.sockets.length - 1;
-//             if (masterIndex === null) {
-//                 room.sockets[i].send(JSON.stringify({master: true}));
-//                 masterIndex = i;
-//             } else {
-//                 room.sockets[i].send(JSON.stringify({master: false}));
-//             }
+    if (room.masterIndex === undefined) {
+        room.masterIndex = peerNo;
+        room.peers[peerNo].socket.send(JSON.stringify({master: true}));
+    }
+    else if (room.masterIndex === peerNo) {}
+    else {
+        room.peers[peerNo].socket.send(JSON.stringify({master: false}));
+    }
 }
 
 function onWebsocketClose(ws, addr) {
