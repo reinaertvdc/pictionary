@@ -3,10 +3,44 @@ class Room {
 
     constructor() {
         this.index = -1;
-        this.sockets = [];
+        this.peers = [];
         this.pass = '';
+        this.masterIndex = null;
         this.public = false;
     }
+
+    addPeer(sid, sock) {
+        let i = 0;
+        for (;i < this.peers.length; i++) if (this.peers[i] !== undefined && this.peers[i].sid === sid) {
+            this.peers[i].socket = sock;
+            return i;
+        }
+        let p = {
+            sid: sid,
+            socket: sock,
+            joined: false
+        };
+        return this.peers.push(p) - 1;
+    }
+
+    getPeerBySid(sid) {
+        for (let i = 0; i < this.peers.length; i++) if (this.peers[i].sid === sid) return this.peers[i];
+        return undefined;
+    }
+
+    removePeerBySid(sid) {
+        for (let i = 0; i < this.peers.length; i++) {
+            if (this.peers[i] !== undefined && this.peers[i].sid === sid) {
+                if (this.peers[i].socket !== undefined && this.peers[i].socket.readyState <= 1) {
+                    this.peers[i].socket.close();
+                }
+                this.peers[i].socket = undefined;
+                this.peers[i].joined = false;
+                return;
+            }
+        }
+    }
+
 }
 
 class RoomList {
@@ -26,8 +60,8 @@ class RoomList {
         this.roomCount++;
         setTimeout(() => {
             let activeConn = false;
-            for (let i = 0; i < r.sockets.length; i++) {
-                if (r.sockets[i] !== undefined && r.sockets[i].readyState <= 1) {
+            for (let i = 0; i < r.peers.length; i++) {
+                if (r.peers[i] !== undefined && r.peers[i].socket !== undefined && r.peers[i].socket.readyState <= 1) {
                     activeConn = true;
                     break;
                 }
@@ -47,14 +81,14 @@ class RoomList {
         }
         if (typeof room === 'number') {
             if (room < 0 || room >= this.rooms.length || this.rooms[room] === undefined) return;
-            if (this.rooms[room].sockets !== undefined && this.rooms[room].sockets.length > 0) {
-                for (let i = 0; i < this.rooms[room].sockets.length; i++) {
-                    if (this.rooms[room].sockets[i] !== undefined && this.rooms[room].sockets[i].readyState < 2) {
-                        this.rooms[room].sockets[i].close();
+            if (this.rooms[room].peers !== undefined && this.rooms[room].peers.length > 0) {
+                for (let i = 0; i < this.rooms[room].peers.length; i++) {
+                    if (this.rooms[room].peers[i] !== undefined && this.rooms[room].peers[i].socket !== undefined && this.rooms[room].peers[i].socket.readyState < 2) {
+                        this.rooms[room].peers[i].socket.close();
                     }
                 }
             }
-            this.rooms[room].sockets = [];
+            this.rooms[room].peers = [];
             this.rooms[room].index = -1;
             this.rooms[room] = undefined;
             this.roomCount--;
