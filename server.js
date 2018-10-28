@@ -185,6 +185,12 @@ function onJoin(roomNo, peerNo) {
     else {
         room.peers[peerNo].socket.send(JSON.stringify({master: false}));
     }
+    let peer = room.peers[peerNo];
+    if (peer !== undefined && peer.socket !== undefined && peer.socket.readyState === 1) {
+        for (let i = 0; i < room.drawStack.length; i++) {
+            peer.socket.send(room.drawStack[i]);
+        }
+    }
 }
 
 function onWebsocketClose(ws, addr) {
@@ -304,6 +310,8 @@ function onMessageString(ws, msg) {
 }
 
 function onMessageBinary(ws, msg, roomNo, peerNo) {
+    let room = rooms.rooms[roomNo];
+    room.drawStack.push(msg);
     broadcast(msg, roomNo, peerNo);
 }
 
