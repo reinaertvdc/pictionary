@@ -64,6 +64,34 @@ app.post('/room/create', (req, res) => {
         createRoom(word, pass, req, res);
     }
 });
+app.post('/room/join', (req, res) => {
+    let roomNo = parseInt(req.body.roomNo);
+    console.log(roomNo);
+    let nick = req.body.nick;
+    if (roomNo === undefined || isNaN(roomNo)) {
+        res.redirect(302, '/');
+        return;
+    }
+    if (nick === undefined || nick.trim() === '') {
+        res.redirect(302, '/');
+        return;
+    }
+    let room = rooms.rooms[roomNo];
+    if (room === undefined) {
+        res.redirect(302, '/');
+        return;
+    }
+    let peer = room.getPeerBySid(req.sessionID);
+    if (peer !== undefined) {
+        peer.nick = nick;
+    }
+    req.session.cookie.path = '/room/' + roomNo;
+    req.session.cookie.httpOnly = false;
+    req.session.room = roomNo;
+    req.session.nick = nick;
+    req.session.touch();
+    res.redirect(302, '/room/'+roomNo);
+});
 app.get('/room/:id([0-9]+)', (req, res) => {
     req.session.cookie.path = '/room/' + req.params.id;
     req.session.cookie.httpOnly = false;
@@ -98,6 +126,9 @@ function newWebsocketConnection(ws, req) {
             return;
         }
         let peer = rooms.rooms[sess.room].addPeer(sid, ws);
+        if (sess.nick !== undefined) {
+            rooms.rooms[sess.room].peers[peer].nick = sess.nick;
+        }
         sess.peer = peer;
         store.set(sid, sess, err => {
         });
