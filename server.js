@@ -114,7 +114,6 @@ function newWebsocketConnection(ws, req) {
 }
 
 function onJoin(roomNo, peerNo) {
-    //TODO: master index
     let room = rooms.rooms[roomNo];
     for (let i = 0; i < room.peers.length; i++) {
         if (i === peerNo) continue;
@@ -136,7 +135,9 @@ function onJoin(roomNo, peerNo) {
         room.masterIndex = peerNo;
         room.peers[peerNo].socket.send(JSON.stringify({master: true}));
     }
-    else if (room.masterIndex === peerNo) {}
+    else if (room.masterIndex === peerNo) {
+        room.peers[peerNo].socket.send(JSON.stringify({master: true}));
+    }
     else {
         room.peers[peerNo].socket.send(JSON.stringify({master: false}));
     }
@@ -154,7 +155,16 @@ function onWebsocketClose(ws, addr) {
                 }
             }
             if (remove) {
-                rooms.removeRoom(sess.roomNo);
+                setTimeout(()=>{
+                    for (let i = 0; i < rooms.rooms[sess.room].peers.length; i++) {
+                        if (rooms.rooms[sess.room].peers[i] !== undefined && rooms.rooms[sess.room].peers[i].socket !== undefined && rooms.rooms[sess.room].peers[i].socket.readyState <= 1) {
+                            remove = false;
+                            break;
+                        }
+                    }
+                    if (remove)
+                        rooms.removeRoom(sess.roomNo);
+                },5000);
             }
         }
         console.log('WebSocket disconnected from: ' + addr);
