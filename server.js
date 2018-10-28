@@ -34,29 +34,35 @@ app.use('/room/', session({
     }
 }));
 
-function createRoom(pass, req, res) {
+function createRoom(word, pass, req, res) {
     let r = rooms.addRoom(pass);
     if (r !== undefined && typeof r.index === 'number' && r.index >= 0) {
+        r.word = word;
         req.session.cookie.path = '/room/' + r.index;
         req.session.cookie.httpOnly = false;
         req.session.room = r.index;
         req.session.pass = pass;
         req.session.touch();
-        // res.cookie('pass', pass, {maxAge: 300000, path:'/room/'+r.index});
         res.redirect(302, '/room/' + r.index);
     }
     else {
         res.redirect(302, '/');
     }
 }
-
-app.get('/room/create', (req, res) => {
-    createRoom('', req, res);
-});
+//
+// app.get('/room/create', (req, res) => {
+//     createRoom('', req, res);
+// });
 app.post('/room/create', (req, res) => {
     let pass = req.body.pass;
+    let word = req.body.drawing;
     if (pass === undefined) pass = '';
-    createRoom(pass, req, res);
+    if (word === undefined || word.trim() === '') {
+        res.redirect(302, '/');
+    }
+    else {
+        createRoom(word, pass, req, res);
+    }
 });
 app.get('/room/:id([0-9]+)', (req, res) => {
     req.session.cookie.path = '/room/' + req.params.id;
