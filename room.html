@@ -24,7 +24,6 @@
                 <input type="submit" value="Send" id="send" class="send">
             </form>
         </div>
-    </div>
 <script type="text/javascript" src="CanvasController.js"></script>
 <script type="text/javascript" src="CameraViewController.js"></script>
 <script type="text/javascript" src="ChatController.js"></script>
@@ -33,33 +32,14 @@
 <script type="text/javascript">
     const roomController = new RoomController();
 
-    //https://stackoverflow.com/questions/14573223/set-cookie-and-get-cookie-with-javascript
-    function setCookie(name,value,secs,path) {
-        let maxAge = "";
-        if (secs) {
-            maxAge = '; Max-Age=' + (secs*1000);
-            // let date = new Date();
-            // date.setTime(date.getTime() + (secs*1000));
-            // expires = "; expires=" + date.toUTCString();
+    function getSessionID() {
+        let ca = document.cookie.split(';');
+        for (let i = 0; i < ca.length; i++) {
+            let c = ca[i].trim();
+            if (c.startsWith('connect.sid=')) {
+                return c.substr('connect.sid='.length, c.length - 'connect.sid='.length).trim();
+            }
         }
-        if (typeof path !== 'string') path = '/';
-        document.cookie = name + '=' + (value || '')  + maxAge + "; path=" + path;
-        console.log(document.cookie);
-    }
-    //https://stackoverflow.com/questions/14573223/set-cookie-and-get-cookie-with-javascript
-    function getCookie(name) {
-        var nameEQ = name + "=";
-        var ca = document.cookie.split(';');
-        for(var i=0;i < ca.length;i++) {
-            var c = ca[i];
-            while (c.charAt(0)==' ') c = c.substring(1,c.length);
-            if (c.indexOf(nameEQ) == 0) return c.substring(nameEQ.length,c.length);
-        }
-        return null;
-    }
-    //https://stackoverflow.com/questions/14573223/set-cookie-and-get-cookie-with-javascript
-    function eraseCookie(name) {
-        document.cookie = name+'=; Max-Age=-1';
     }
 
     let ws = undefined;
@@ -67,14 +47,10 @@
     let streamLocal = undefined;
     let streamLocalReady = false;
 
-    let room = parseInt(window.location.pathname.split('/',3)[2]);
-    let pass = undefined;
-    let passIsCookiePass = false;
-    console.log('cookie pass: ' + getCookie('pass'));
-    if (getCookie('pass') !== undefined && getCookie('pass') !== null) {
-        pass = getCookie('pass');
-        passIsCookiePass = true;
-    }
+    let peers = [];
+    let peersProcessed = [];
+
+    let room = parseInt(window.location.pathname.split('/', 3)[2]);
     if (room === undefined || isNaN(room) || room < 0) {
         window.location = '/';
     }
@@ -86,18 +62,20 @@
     function createWebSocket() {
         let host = window.location.hostname;
         let port = 9004;
-        let sock = new WebSocket('wss://' + host + ':' + port);
+        let sock = new WebSocket('wss://' + host + ':' + port + '/?sid=' + encodeURI(getSessionID()));
         sock.binaryType = 'arraybuffer';
         sock.onopen = event => {
             ws = sock;
             roomController.socketController.socket = ws;
-            joinRoom(room, pass);
         };
         sock.onerror = event => {
             alert('Could not create WebSocket connection to server');
         };
         sock.onmessage = event => {
             onWebSocketMessage(event.data);
+        };
+        sock.onclose = event => {
+            alert('Connection to server closed!\nPlease refresh the page.');
         }
     }
 
@@ -110,8 +88,8 @@
                 if (m.join !== undefined) {
                     onMessageJoin(m.join);
                 }
-                if (m.peers !== undefined) {
-                    onMessagePeers(m.peers);
+                else if (m.needPass !== undefined) {
+                    onMessageNeedPass(m.needPass);
                 }
                 if (m.init !== undefined) {
                     onMessageInit(m.init);
@@ -125,8 +103,9 @@
                 }
                 //TODO: other json data
             }
-            catch(err) {
+            catch (err) {
                 console.log('string');
+                // console.log(err);
                 console.log(m);
                 //TODO: non json data
             }
@@ -136,38 +115,15 @@
         }
     }
 
-    function joinRoom(room, pass) {
-        if (typeof pass === 'string') {
-            ws.send(JSON.stringify({join:{room:room,pass:pass}}));
-        }
-        else {
-            ws.send(JSON.stringify({join:{room:room}}));
-        }
+    function onMessageNeedPass(m) {
+        let pass = prompt('Enter room password:', '');
+        ws.send(JSON.stringify({pass: pass}));
     }
 
     function onMessageJoin(m) {
-        if (m.needPass === true || (m.success === false && passIsCookiePass)) {
-            passIsCookiePass = false;
-            eraseCookie('pass');
-            pass = prompt('Enter room password:', '');
-            if (pass === null || pass === undefined || pass === '') {
-                window.location = '/';
-                alert('Could not enter room ' + room);
-            }
-            else {
-                joinRoom(room, pass);
-            }
+        if (typeof m !== 'number') {
+            alert('Could not enter room ' + m);
             return;
-        }
-        else if (m.success === false) {
-            eraseCookie('pass');
-            window.location = '/';
-            alert('Could not enter room ' + room);
-            return;
-        }
-        else if (!passIsCookiePass && typeof pass === 'string' && pass.length > 0) {
-            eraseCookie('pass');
-            setCookie('pass', pass, 300, '/room/'+room);
         }
         requestUserMedia();
     }
@@ -209,38 +165,35 @@
                     document.getElementById('vid_local').style.display = 'inline';
             }
         }
-        ws.send(JSON.stringify({peers:0}));
-    }
-
-    let peersProcessed = 0;
-    let peers = [];
-    function onMessagePeers(p) {
-        if (!streamLocalReady || typeof p !== 'number' || p <= 0) return;
-        for (let i = peersProcessed; i < p; i++, peersProcessed++) {
-            peers.push(new RTCPeerConnection({
-                iceServers: [
-                    {url: 'stun:stun.l.google.com:19302'}
-                ]
-            }));
-        }
     }
 
     function onMessageInit(p) {
         if (typeof p !== 'number' || p < 0) return;
-        if (p >= peersProcessed) {
-            setTimeout(() => {onMessageInit(p);},100);
+        if (!streamLocalReady) {
+            setTimeout(() => {
+                onMessageInit(p);
+            }, 200);
             return;
         }
+        peersProcessed[p] = false;
+        if (peers[p] !== undefined) {
+            peers[p].close();
+        }
+        peers[p] = new RTCPeerConnection({
+            iceServers: [
+                {url: 'stun:stun.l.google.com:19302'}
+            ]
+        });
         if (streamLocal !== undefined) {
             peers[p].addStream(streamLocal);
         }
-        peers[p].createOffer({offerToReceiveAudio: true, offerToReceiveVideo:true}).then(offer => {
+        peers[p].createOffer({offerToReceiveAudio: true, offerToReceiveVideo: true}).then(offer => {
             peers[p].setLocalDescription(offer);
-            ws.send(JSON.stringify({signal:{peer:p,signal:{offer:offer}}}));
+            ws.send(JSON.stringify({signal: {peer: p, signal: {offer: offer}}}));
         });
         peers[p].onicecandidate = event => {
             if (event.candidate) {
-                ws.send(JSON.stringify({signal:{peer:p,signal:{ice:event.candidate}}}));
+                ws.send(JSON.stringify({signal: {peer: p, signal: {ice: event.candidate}}}));
             }
         };
         peers[p].onaddstream = event => {
@@ -254,21 +207,33 @@
         };
         peers[p].oniceconnectionstatechange = event => {
             if (peers[p].iceConnectionState === 'failed' || peers[p].iceConnectionState === 'disconnected') {
+                peersProcessed[p] = false;
                 let node = document.getElementById('vid_remote_' + p);
-                if (node !== undefined) {
+                if (node !== undefined && node !== null) {
                     node.parentElement.removeChild(node);
                 }
                 peers[p] = undefined;
                 roomController.cameraViewController.update();
             }
         };
+        peersProcessed[p] = true;
     }
 
-    function onMessageSignal(p,s) {
+    function onMessageSignal(p, s) {
         if (typeof p !== 'number' || p < 0 || s === undefined) return;
-        if (p >= peersProcessed) {
-            setTimeout(() => {onMessageSignal(p,s);},100);
+        if (!streamLocalReady){
+            setTimeout(() => {
+                onMessageSignal(p, s);
+            }, 200);
             return;
+        }
+        if (peersProcessed[p] === undefined || peersProcessed[p] !== true) {
+            peers[p] = new RTCPeerConnection({
+                iceServers: [
+                    {url: 'stun:stun.l.google.com:19302'}
+                ]
+            });
+            peersProcessed[p] = true;
         }
         if (typeof s.ice !== 'undefined') {
             peers[p].addIceCandidate(s.ice).catch(event => {
@@ -282,7 +247,7 @@
             }
             peers[p].onicecandidate = event => {
                 if (event.candidate) {
-                    ws.send(JSON.stringify({signal:{peer:p,signal:{ice:event.candidate}}}));
+                    ws.send(JSON.stringify({signal: {peer: p, signal: {ice: event.candidate}}}));
                 }
             };
             peers[p].onaddstream = event => {
@@ -296,7 +261,7 @@
             };
             peers[p].createAnswer().then(answer => {
                 peers[p].setLocalDescription(answer);
-                ws.send(JSON.stringify({signal:{peer:p,signal:{answer:answer}}}));
+                ws.send(JSON.stringify({signal: {peer: p, signal: {answer: answer}}}));
             });
             peers[p].oniceconnectionstatechange = event => {
                 if (peers[p].iceConnectionState === 'failed' || peers[p].iceConnectionState === 'disconnected') {
@@ -324,7 +289,7 @@
 
         let vids = document.querySelectorAll('#cameraview video');
         let vidArray = Array.prototype.slice.call(vids, 0);
-        vidArray.sort(function(a,b) {
+        vidArray.sort(function (a, b) {
             if (a.id < b.id) return -1;
             if (a.id > b.id) return 1;
             return 0;
@@ -332,7 +297,7 @@
         let container = document.getElementById('cameraview');
         const parent = container.parentElement;
         parent.removeChild(container);
-        while(container.firstChild) container.removeChild(container.firstChild);
+        while (container.firstChild) container.removeChild(container.firstChild);
         for (let i = 0; i < vidArray.length; i++)
             container.append(vidArray[i]);
         parent.append(container);
@@ -340,7 +305,9 @@
             try {
                 node.play();
             }
-            catch (err) {}
+            catch (err) {
+                // console.log(err);
+            }
         });
 
         roomController.cameraViewController.update();
