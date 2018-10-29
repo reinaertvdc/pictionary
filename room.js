@@ -6,6 +6,7 @@ class Room {
         this.peers = [];
         this.pass = '';
         this.word = undefined;
+        this.winner = undefined;
         this.drawStack = [];
         this.masterIndex = undefined;
         this.public = false;

@@ -294,9 +294,19 @@ function onMessageJson(ws, msg) {
             if (typeof msg.chat === 'string' && peer !== undefined && peer.joined === true) {
                 broadcast(JSON.stringify({nick: peer.nick, chat:msg.chat}), roomNo, peerNo);
                 ws.send(JSON.stringify({nick: peer.nick, chat:msg.chat}));
+                if (msg.chat === room.word && room.winner === undefined) {
+                    room.winner = peerNo;
+                    broadcast(JSON.stringify({win:{win:false,nick:peer.nick}}), roomNo, peerNo);
+                    ws.send(JSON.stringify({win:{win:true,nick:peer.nick}}));
+                }
             }
             if (msg.signal !== undefined && msg.signal.signal !== undefined && (msg.signal.peer === undefined || typeof msg.signal.peer === 'number') && peer !== undefined) {
                 onMessageSignal(roomNo, peerNo, msg.signal.peer, msg.signal.signal);
+            }
+            if (msg.clear !== undefined && msg.clear === true && peer !== undefined && peerNo === room.masterIndex) {
+                room.drawStack = [];
+                broadcast(JSON.stringify({clear:true}), roomNo, peerNo);
+                ws.send(JSON.stringify({clear:true}));
             }
         });
     }

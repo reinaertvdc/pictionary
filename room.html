@@ -12,6 +12,7 @@
             <a id="mute" href="">MUTE</a>
         </div>
         <div class="toolbox">
+            <a href="" class="toolbox-text-button" id="buttonClear">Clear</a>
             <p></p>
         </div>
         <div class="whiteboard">
@@ -73,6 +74,13 @@
         createWebSocket();
     }
 
+    document.getElementById('buttonClear').onclick = ev => {
+        ev.preventDefault();
+        if (ws !== undefined && ws.readyState === 1) {
+            ws.send(JSON.stringify({clear:true}));
+        }
+    };
+
     function createWebSocket() {
         let host = window.location.hostname;
         let port = 9004;
@@ -114,8 +122,19 @@
                 if (m.master !== undefined) {
                     roomController.canvasController.isMaster = m.master;
                 }
+                if (m.clear !== undefined && m.clear === true) {
+                    roomController.canvasController.clear();
+                }
                 if (m.chat !== undefined) {
                     roomController.chatController.addMessage(m.nick, m.chat);
+                }
+                if (m.win !== undefined && m.win.win !== undefined && m.win.nick !== undefined) {
+                    if (m.win.win === true) {
+                        alert('Congratiulations! You have won the game');
+                    }
+                    else {
+                        alert('Too bad! ' + m.win.nick + ' has won this game');
+                    }
                 }
                 //TODO: other json data
             }
@@ -334,5 +353,6 @@
     }
 
 </script>
+</div>
 </body>
 </html>
