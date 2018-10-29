@@ -71,7 +71,6 @@ app.post('/room/create', (req, res) => {
 });
 app.post('/room/join', (req, res) => {
     let roomNo = parseInt(req.body.roomNo);
-    console.log(roomNo);
     let nick = req.body.nick;
     if (roomNo === undefined || isNaN(roomNo)) {
         res.redirect(302, '/');
@@ -185,6 +184,12 @@ function onJoin(roomNo, peerNo) {
     else {
         room.peers[peerNo].socket.send(JSON.stringify({master: false}));
     }
+    let peer = room.peers[peerNo];
+    if (peer !== undefined && peer.socket !== undefined && peer.socket.readyState === 1) {
+        for (let i = 0; i < room.drawStack.length; i++) {
+            peer.socket.send(room.drawStack[i]);
+        }
+    }
 }
 
 function onWebsocketClose(ws, addr) {
@@ -247,7 +252,9 @@ function onMessage(ws, msg) {
                         peer = room.peers[sess.peer];
                     }
                 }
-                onMessageBinary(ws, msg, roomNo, peerNo);
+                if (peer !== undefined && peerNo === room.masterIndex) {
+                    onMessageBinary(ws, msg, roomNo, peerNo);
+                }
             });
         }
         // onMessageBinary(ws, msg);
@@ -302,6 +309,8 @@ function onMessageString(ws, msg) {
 }
 
 function onMessageBinary(ws, msg, roomNo, peerNo) {
+    let room = rooms.rooms[roomNo];
+    room.drawStack.push(msg);
     broadcast(msg, roomNo, peerNo);
 }
 
