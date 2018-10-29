@@ -142,6 +142,7 @@
                         alert('Too bad! ' + m.win.nick + ' has won this game');
                     }
                 }
+                console.log(typeof m.nletters);
                 if (typeof m.nletters === 'number' && m.nletters > 0) {
                     document.getElementById('numletters').innerHTML = 'The answer is a ' + m.nletters + '-letter word';
                 }
