@@ -63,6 +63,7 @@ app.post('/room/create', (req, res) => {
         res.redirect(302, '/');
         return;
     }
+    word = word.trim();
     if (nick === undefined || nick.trim() === '') {
         res.redirect(302, '/');
         return;
@@ -186,8 +187,12 @@ function onJoin(roomNo, peerNo) {
     }
     let peer = room.peers[peerNo];
     if (peer !== undefined && peer.socket !== undefined && peer.socket.readyState === 1) {
+        peer.socket.send(JSON.stringify({nletter:room.word.length}));
         for (let i = 0; i < room.drawStack.length; i++) {
             peer.socket.send(room.drawStack[i]);
+        }
+        for (let i = 0; i < room.chat.length; i++) {
+            peer.socket.send(room.chat[i]);
         }
     }
 }
@@ -294,7 +299,8 @@ function onMessageJson(ws, msg) {
             if (typeof msg.chat === 'string' && peer !== undefined && peer.joined === true) {
                 broadcast(JSON.stringify({nick: peer.nick, chat:msg.chat}), roomNo, peerNo);
                 ws.send(JSON.stringify({nick: peer.nick, chat:msg.chat}));
-                if (msg.chat === room.word && room.winner === undefined) {
+                room.chat.push(JSON.stringify({nick: peer.nick, chat:msg.chat}));
+                if (msg.chat === room.word && room.winner === undefined && peerNo !== room.masterIndex) {
                     room.winner = peerNo;
                     broadcast(JSON.stringify({win:{win:false,nick:peer.nick}}), roomNo, peerNo);
                     ws.send(JSON.stringify({win:{win:true,nick:peer.nick}}));

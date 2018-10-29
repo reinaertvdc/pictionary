@@ -8,6 +8,7 @@ class Room {
         this.word = undefined;
         this.winner = undefined;
         this.drawStack = [];
+        this.chat = [];
         this.masterIndex = undefined;
         this.public = false;
     }
