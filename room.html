@@ -133,9 +133,15 @@
                     if (m.win.win === true) {
                         alert('Congratiulations! You have won the game');
                     }
+                    else if (roomController.canvasController.isMaster) {
+                        alert('Good job! ' + m.win.nick + ' has won this game');
+                    }
                     else {
                         alert('Too bad! ' + m.win.nick + ' has won this game');
                     }
+                }
+                if (typeof m.nletters === 'number' && m.nletters > 0) {
+                    document.getElementById('numletters').value = m.nletters + ' letters';
                 }
                 //TODO: other json data
             }

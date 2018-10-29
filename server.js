@@ -63,6 +63,7 @@ app.post('/room/create', (req, res) => {
         res.redirect(302, '/');
         return;
     }
+    word = word.trim();
     if (nick === undefined || nick.trim() === '') {
         res.redirect(302, '/');
         return;
@@ -186,6 +187,7 @@ function onJoin(roomNo, peerNo) {
     }
     let peer = room.peers[peerNo];
     if (peer !== undefined && peer.socket !== undefined && peer.socket.readyState === 1) {
+        peer.socket.send(JSON.stringify({nletter:room.word.length}));
         for (let i = 0; i < room.drawStack.length; i++) {
             peer.socket.send(room.drawStack[i]);
         }
