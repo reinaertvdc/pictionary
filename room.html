@@ -8,11 +8,11 @@
 <body>
     <div class="room">
         <div class="appbar">
-            <a href="/">HOME</a>
-            <a id="mute" href="">MUTE</a>
+            <button onclick="window.location.href = '/'">HOME</button>
+            <button id="mute">MUTE</button>
         </div>
         <div class="toolbox">
-            <a href="" class="toolbox-text-button" id="buttonClear">Clear</a>
+            <button class="toolbox-text-button" id="buttonClear">Clear</button>
             <span id="numletters"></span>
         </div>
         <div class="whiteboard">
@@ -20,9 +20,7 @@
         </div>
         <div id="cameraview" class="cameraview"></div>
         <div id="chat" class="chat">
-            <div class="feed" id="feed">
-                
-            </div>
+            <div class="feed" id="feed"></div>
             <form class="input" id="input">
                 <input type="text" id="text" class="text">
                 <input type="submit" value="Send" id="send" class="send">

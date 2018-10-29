@@ -20,6 +20,13 @@ class CameraViewController {
             videoFeed.style.display = 'none';
         }
 
+        if (this._cameraView.childNodes.length === 0) {
+            this._currentViewIndex = 0;
+            return;
+        } else if (this._cameraView.childNodes.length < (this._currentViewIndex + 1)) {
+            this._currentViewIndex = 0;
+        }
+        
         this._cameraView.childNodes[this._currentViewIndex].style.display = 'block';
     }
 
