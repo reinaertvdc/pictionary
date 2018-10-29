@@ -108,8 +108,8 @@ app.use('/room/', express.static('static/'));
 app.use('/', express.static('static/', {index: 'index.html'}));
 
 let httpsServer = https.createServer(options, app);
-let wssServer = https.createServer(options);
-let wss = new ws.Server({server: wssServer});
+// let wssServer = https.createServer(options);
+let wss = new ws.Server({server: httpsServer});
 
 wss.on('connection', newWebsocketConnection);
 
@@ -364,4 +364,4 @@ function onMessageSignal(roomNo, peerNoFrom, peerNoTo, signal) {
 }
 
 httpsServer.listen(ports.https);
-wssServer.listen(ports.wss);
+// wssServer.listen(ports.wss);
