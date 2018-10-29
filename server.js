@@ -189,6 +189,9 @@ function onJoin(roomNo, peerNo) {
         for (let i = 0; i < room.drawStack.length; i++) {
             peer.socket.send(room.drawStack[i]);
         }
+        for (let i = 0; i < room.chat.length; i++) {
+            peer.socket.send(room.chat[i]);
+        }
     }
 }
 
@@ -294,6 +297,7 @@ function onMessageJson(ws, msg) {
             if (typeof msg.chat === 'string' && peer !== undefined && peer.joined === true) {
                 broadcast(JSON.stringify({nick: peer.nick, chat:msg.chat}), roomNo, peerNo);
                 ws.send(JSON.stringify({nick: peer.nick, chat:msg.chat}));
+                room.chat.push(JSON.stringify({nick: peer.nick, chat:msg.chat}));
                 if (msg.chat === room.word && room.winner === undefined) {
                     room.winner = peerNo;
                     broadcast(JSON.stringify({win:{win:false,nick:peer.nick}}), roomNo, peerNo);
