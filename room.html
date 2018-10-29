@@ -143,7 +143,7 @@
                     }
                 }
                 if (typeof m.nletters === 'number' && m.nletters > 0) {
-                    document.getElementById('numletters').value = m.nletters + ' letters';
+                    document.getElementById('numletters').innerHTML = 'The answer is a ' + m.nletters + '-letter word';
                 }
                 //TODO: other json data
             }
