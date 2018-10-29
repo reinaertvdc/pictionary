@@ -5,6 +5,7 @@ const options = require('./cert.js');
 const path = require('path');
 const url = require('url');
 const https = require('https');
+const http = require('http');
 const ws = require('ws');
 const express = require('express');
 const session = require('express-session');
@@ -30,7 +31,7 @@ app.use('/room/', session({
     cookie: {
         httpOnly: false,
         maxAge: 3600000,
-        secure: true
+        secure: false
     }
 }));
 
@@ -107,9 +108,10 @@ app.get('/room/:id([0-9]+)', (req, res) => {
 app.use('/room/', express.static('static/'));
 app.use('/', express.static('static/', {index: 'index.html'}));
 
-let httpsServer = https.createServer(options, app);
-let wssServer = https.createServer(options);
-let wss = new ws.Server({server: wssServer});
+let httpServer = http.createServer(app);
+// let httpsServer = https.createServer(options, app);
+// let wssServer = https.createServer(options);
+let wss = new ws.Server({server: httpServer});
 
 wss.on('connection', newWebsocketConnection);
 
@@ -187,7 +189,7 @@ function onJoin(roomNo, peerNo) {
     }
     let peer = room.peers[peerNo];
     if (peer !== undefined && peer.socket !== undefined && peer.socket.readyState === 1) {
-        peer.socket.send(JSON.stringify({nletter:room.word.length}));
+        peer.socket.send(JSON.stringify({nletters:room.word.length}));
         for (let i = 0; i < room.drawStack.length; i++) {
             peer.socket.send(room.drawStack[i]);
         }
@@ -363,5 +365,5 @@ function onMessageSignal(roomNo, peerNoFrom, peerNoTo, signal) {
     }
 }
 
-httpsServer.listen(ports.https);
-wssServer.listen(ports.wss);
+httpServer.listen(ports.https);
+// wssServer.listen(ports.wss);

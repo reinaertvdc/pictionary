@@ -81,7 +81,7 @@
 
     function createWebSocket() {
         let host = window.location.hostname;
-        let port = 9004;
+        let port = 8104;
         let sock = new WebSocket('wss://' + host + ':' + port + '/?sid=' + encodeURI(getSessionID()));
         sock.binaryType = 'arraybuffer';
         sock.onopen = event => {
@@ -140,8 +140,9 @@
                         alert('Too bad! ' + m.win.nick + ' has won this game');
                     }
                 }
+                console.log(typeof m.nletters);
                 if (typeof m.nletters === 'number' && m.nletters > 0) {
-                    document.getElementById('numletters').value = m.nletters + ' letters';
+                    document.getElementById('numletters').innerHTML = 'The answer is a ' + m.nletters + '-letter word';
                 }
                 //TODO: other json data
             }
