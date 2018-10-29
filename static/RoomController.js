@@ -14,6 +14,8 @@ class RoomController {
 
     get cameraViewController() { return this._cameraViewController; }
 
+    get chatController() { return this._chatController; }
+
     get socketController() { return this._socketController; }
     set socketController(v) { this._socketController = v; }
 }

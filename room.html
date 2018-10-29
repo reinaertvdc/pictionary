@@ -126,6 +126,9 @@
                 if (m.clear !== undefined && m.clear === true) {
                     roomController.canvasController.clear();
                 }
+                if (m.chat !== undefined) {
+                    roomController.chatController.addMessage(m.nick, m.chat);
+                }
                 //TODO: other json data
             }
             catch (err) {
@@ -343,5 +346,6 @@
     }
 
 </script>
+</div>
 </body>
 </html>

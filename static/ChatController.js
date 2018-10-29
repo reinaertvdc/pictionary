@@ -14,11 +14,13 @@ class ChatController {
 
             this._text.value = "";
 
-            this.addMessage("Mario", msg);
+            this._roomController.socketController.send(JSON.stringify({chat: msg}));
         }
     }
 
     addMessage(name, content) {
+        console.log(name);
+        console.log(content);
         const message = document.createElement('DIV');
         const nameEl = document.createElement('B');
         const contentEl = document.createElement('SPAN');
