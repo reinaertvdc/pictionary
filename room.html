@@ -83,7 +83,7 @@
 
     function createWebSocket() {
         let host = window.location.hostname;
-        let port = 9004;
+        let port = 8104;
         let sock = new WebSocket('wss://' + host + ':' + port + '/?sid=' + encodeURI(getSessionID()));
         sock.binaryType = 'arraybuffer';
         sock.onopen = event => {
