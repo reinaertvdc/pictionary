@@ -15,6 +15,12 @@ class CameraViewController {
 
     update() {
         this._resize();
+
+        for (const videoFeed of this._cameraView.childNodes) {
+            videoFeed.style.display = 'none';
+        }
+
+        this._cameraView.childNodes[this._currentViewIndex].style.display = 'block';
     }
 
     /**
@@ -33,7 +39,13 @@ class CameraViewController {
 
     _cycle() {
         setTimeout(() => {
-            //const this._cameraView.childNodes
+            const numViews = this._cameraView.childNodes.length;
+
+            if (numViews > 0) {
+                this._cameraView.childNodes[this._currentViewIndex].style.display = 'none';
+                this._currentViewIndex = (this._currentViewIndex + 1) % numViews;
+                this._cameraView.childNodes[this._currentViewIndex].style.display = 'block';
+            }
 
             this._cycle();
         }, 4000);
