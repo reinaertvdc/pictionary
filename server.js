@@ -31,7 +31,7 @@ app.use('/room/', session({
     cookie: {
         httpOnly: false,
         maxAge: 3600000,
-        secure: true
+        secure: false
     }
 }));
 
