@@ -120,8 +120,10 @@
                     onMessageSignal(m.signal.peer, m.signal.signal);
                 }
                 if (m.master !== undefined) {
-                    console.log(m.master);
                     roomController.canvasController.isMaster = m.master;
+                    if (!m.master) {
+                        document.getElementById('buttonClear').style.display = 'none';
+                    }
                 }
                 if (m.clear !== undefined && m.clear === true) {
                     roomController.canvasController.clear();
