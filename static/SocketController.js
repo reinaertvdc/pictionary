@@ -6,7 +6,7 @@ class SocketController {
 
     set socket(v) { this._socket = v; }
 
-    send( data) {
+    send(data) {
         this._socket.send(data);
     }
 

@@ -115,6 +115,9 @@
                     console.log(m.master);
                     roomController.canvasController.isMaster = m.master;
                 }
+                if (m.chat !== undefined) {
+                    roomController.chatController.addMessage(m.nick, m.chat);
+                }
                 //TODO: other json data
             }
             catch (err) {
