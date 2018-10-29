@@ -129,6 +129,14 @@
                 if (m.chat !== undefined) {
                     roomController.chatController.addMessage(m.nick, m.chat);
                 }
+                if (m.win !== undefined && m.win.win !== undefined && m.win.nick !== undefined) {
+                    if (m.win.win === true) {
+                        alert('Congratiulations! You have won the game');
+                    }
+                    else {
+                        alert('Too bad! ' + m.win.nick + ' has won this game');
+                    }
+                }
                 //TODO: other json data
             }
             catch (err) {

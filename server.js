@@ -296,8 +296,8 @@ function onMessageJson(ws, msg) {
                 ws.send(JSON.stringify({nick: peer.nick, chat:msg.chat}));
                 if (msg.chat === room.word && room.winner === undefined) {
                     room.winner = peerNo;
-                    broadcast(JSON.stringify({won:{peer:peerNo,nick:peer.nick}}), roomNo, peerNo);
-                    ws.send(JSON.stringify({won:{peer:peerNo,nick:peer.nick}}));
+                    broadcast(JSON.stringify({win:{win:false,nick:peer.nick}}), roomNo, peerNo);
+                    ws.send(JSON.stringify({win:{win:true,nick:peer.nick}}));
                 }
             }
             if (msg.signal !== undefined && msg.signal.signal !== undefined && (msg.signal.peer === undefined || typeof msg.signal.peer === 'number') && peer !== undefined) {
