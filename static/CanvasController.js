@@ -162,4 +162,10 @@ class CanvasController {
         this._context.closePath();
         this._isDrawing = false;
     }
+
+    clear() {
+        this._drawStack = [];
+        this._canvas.width = this._canvas.width;
+    }
+
 }

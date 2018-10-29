@@ -12,6 +12,7 @@
             <a id="mute" href="">MUTE</a>
         </div>
         <div class="toolbox">
+            <a href="" class="toolbox-text-button" id="buttonClear">Clear</a>
             <p></p>
         </div>
         <div class="whiteboard">
@@ -73,6 +74,13 @@
         createWebSocket();
     }
 
+    document.getElementById('buttonClear').onclick = ev => {
+        ev.preventDefault();
+        if (ws !== undefined && ws.readyState === 1) {
+            ws.send(JSON.stringify({clear:true}));
+        }
+    };
+
     function createWebSocket() {
         let host = window.location.hostname;
         let port = 9004;
@@ -114,6 +122,9 @@
                 if (m.master !== undefined) {
                     console.log(m.master);
                     roomController.canvasController.isMaster = m.master;
+                }
+                if (m.clear !== undefined && m.clear === true) {
+                    roomController.canvasController.clear();
                 }
                 //TODO: other json data
             }
