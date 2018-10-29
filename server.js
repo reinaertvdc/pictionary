@@ -5,6 +5,7 @@ const options = require('./cert.js');
 const path = require('path');
 const url = require('url');
 const https = require('https');
+const http = require('http');
 const ws = require('ws');
 const express = require('express');
 const session = require('express-session');
@@ -107,9 +108,10 @@ app.get('/room/:id([0-9]+)', (req, res) => {
 app.use('/room/', express.static('static/'));
 app.use('/', express.static('static/', {index: 'index.html'}));
 
-let httpsServer = https.createServer(options, app);
+let httpServer = http.createServer(app);
+// let httpsServer = https.createServer(options, app);
 // let wssServer = https.createServer(options);
-let wss = new ws.Server({server: httpsServer});
+let wss = new ws.Server({server: httpServer});
 
 wss.on('connection', newWebsocketConnection);
 
@@ -363,5 +365,5 @@ function onMessageSignal(roomNo, peerNoFrom, peerNoTo, signal) {
     }
 }
 
-httpsServer.listen(ports.https);
+httpServer.listen(ports.https);
 // wssServer.listen(ports.wss);
